@@ -1,0 +1,24 @@
+# https://docs.aws.amazon.com/codedeploy/latest/userguide/reference-appspec-file.html#appspec-reference-ecs
+version: 0.0
+# https://docs.aws.amazon.com/codedeploy/latest/userguide/reference-appspec-file-structure-resources.html#reference-appspec-file-structure-resources-ecs
+Resources:
+  - TargetService:
+      Type: AWS::ECS::Service
+      Properties:
+        TaskDefinition: ""
+        LoadBalancerInfo:
+          ContainerName: ""
+          ContainerPort: 
+#        PlatformVersion: ""
+#        NetworkConfiguration:
+#          AwsvpcConfiguration:
+#            Subnets: ["",""]
+#            SecurityGroups: [""]
+#            AssignPublicIp: ""
+# https://docs.aws.amazon.com/codedeploy/latest/userguide/reference-appspec-file-structure-hooks.html#appspec-hooks-ecs
+#Hooks:
+#  - BeforeInstall: ""
+#  - AfterInstall: ""
+#  - AfterAllowTestTraffic: ""
+#  - BeforeAllowTraffic: ""
+#  - AfterAllowTraffic: ""

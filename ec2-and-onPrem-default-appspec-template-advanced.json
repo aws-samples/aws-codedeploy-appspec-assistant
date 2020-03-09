@@ -1,0 +1,40 @@
+{
+  "version": 0,
+  "os": "linux",
+  "files": [
+    {
+      "source": "source-file-location",
+      "destination": "destination-file-location"
+    }
+  ],
+  "permissions": [
+    {
+      "object": "object-specification",
+      "pattern": "pattern-specification",
+      "except": "exception-specification",
+      "owner": "owner-account-name",
+      "group": "group-name",
+      "mode": "mode-specification",
+      "acls": [
+        "acls-specification"
+      ],
+      "context": {
+        "user": "user-specification",
+        "type": "type-specification",
+        "range": "range-specification"
+      },
+      "type": [
+        "object-type"
+      ]
+    }
+  ],
+  "hooks": {
+    "deployment-lifecycle-event-name": [
+      {
+        "location": "script-location",
+        "timeout": "timeout-in-seconds",
+        "runas": "user-name"
+      }
+    ]
+  }
+}

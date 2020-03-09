@@ -1,0 +1,16 @@
+{
+  "version": 0,
+  "Resources": [
+    {
+      "myLambdaFunction": {
+        "Type": "AWS::Lambda::Function",
+        "Properties": {
+          "Name": "",
+          "Alias": "",
+          "CurrentVersion": "",
+          "TargetVersion": ""
+        }
+      }
+    }
+  ]
+}

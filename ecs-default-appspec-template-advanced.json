@@ -1,0 +1,47 @@
+{
+  "version": 0,
+  "Resources": [
+    {
+      "TargetService": {
+        "Type": "AWS::ECS::Service",
+        "Properties": {
+          "TaskDefinition": "",
+          "LoadBalancerInfo": {
+            "ContainerName": "",
+            "ContainerPort": null
+          },
+          "PlatformVersion": "",
+          "NetworkConfiguration": {
+            "AwsvpcConfiguration": {
+              "Subnets": [
+                "",
+                ""
+              ],
+              "SecurityGroups": [
+                ""
+              ],
+              "AssignPublicIp": ""
+            }
+          }
+        }
+      }
+    }
+  ],
+  "Hooks": [
+    {
+      "BeforeInstall": ""
+    },
+    {
+      "AfterInstall": ""
+    },
+    {
+      "AfterAllowTestTraffic": ""
+    },
+    {
+      "BeforeAllowTraffic": ""
+    },
+    {
+      "AfterAllowTraffic": ""
+    }
+  ]
+}
