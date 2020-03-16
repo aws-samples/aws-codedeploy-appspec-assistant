@@ -8,6 +8,8 @@ import (
 
 	"encoding/json"
 	"gopkg.in/yaml.v3"
+
+	//"aws-codedeploy-appspec-assistant/models"
 )
 
 var fileExtension string
@@ -88,6 +90,8 @@ func runValidation(appSpec string, computePlatform string) {
 
 	fmt.Println("AppSpec file is valid")
 	fmt.Println(appSpec)
+	fmt.Println(appSpecMap)
+
 }
 
 func getMapFromYaml(appSpecYamlString string) (map[string]interface{}, error) {
