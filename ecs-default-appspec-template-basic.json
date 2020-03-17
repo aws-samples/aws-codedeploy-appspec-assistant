@@ -5,10 +5,10 @@
       "TargetService": {
         "Type": "AWS::ECS::Service",
         "Properties": {
-          "TaskDefinition": "",
+          "TaskDefinition": "[Your task definition arn]",
           "LoadBalancerInfo": {
-            "ContainerName": "",
-            "ContainerPort": null
+            "ContainerName": "[Your container Name]",
+            "ContainerPort": 8000
           }
         }
       }

@@ -6,42 +6,8 @@ import (
 	"testing"
 )
 
-var testJsonLambdaAppSpecFileString string = `{
-  "version": 0,
-  "Resources": [
-    {
-      "myLambdaFunction": {
-        "Type": "AWS::Lambda::Function",
-        "Properties": {
-          "Name": "",
-          "Alias": "",
-          "CurrentVersion": "",
-          "TargetVersion": ""
-        }
-      }
-    }
-  ]
-}`
-
-var testYamlLambdaAppSpecFileString string = `# https://docs.aws.amazon.com/codedeploy/latest/userguide/reference-appspec-file.html#appspec-reference-lambda
-version: 0.0
-# https://docs.aws.amazon.com/codedeploy/latest/userguide/reference-appspec-file-structure-resources.html#reference-appspec-file-structure-resources-lambda
-Resources:
-  - myLambdaFunction:
-      Type: AWS::Lambda::Function
-      Properties:
-        Name: ""
-        Alias: ""
-        CurrentVersion: ""
-        TargetVersion: ""
-# https://docs.aws.amazon.com/codedeploy/latest/userguide/reference-appspec-file-structure-hooks.html#appspec-hooks-lambda
-#Hooks:
-#  - BeforeAllowTraffic: ""
-#  - AfterAllowTraffic: ""`
-
-var testJsonLambdaAppSpecMap string = `map[Resources:[map[myLambdaFunction:map[Properties:map[Alias: CurrentVersion: Name: TargetVersion:] Type:AWS::Lambda::Function]]] version:0]`
-
-var testYamlLambdaAppSpecMap string = `map[Resources:[map[myLambdaFunction:map[Properties:map[Alias: CurrentVersion: Name: TargetVersion:] Type:AWS::Lambda::Function]]] version:0]`
+var appSpecStrConversionError string = "The appSpecModel does not match the expected output model"
+var appSpecObjValidationError string = "The valid appSpec object threw errors during validation"
 
 func TestValidateAppSpec_InvalidInput(t *testing.T) {
 	var tests = []struct {
@@ -110,36 +76,131 @@ func TestValidateAppSpec_ValidInput(t *testing.T) {
 	}
 }
 
-func TestGetMapFromYaml(t *testing.T) {
+func TestGetEcsAppSpecObjFromString_ValidInput(t *testing.T) {
 	var tests = []struct {
-		name            string
-		inputFileString string
-		outputString    string
+		name             string
+		fileStrInput     string
+		objectStrOutput  string
+		fileExtensionVal string
 	}{
-		{"YAML file",
-			testYamlLambdaAppSpecFileString, testYamlLambdaAppSpecMap},
+		{"Valid JSON",
+			ecsJsonString, ecsOutputStr, "json"},
+
+		{"Valid YAML",
+			ecsYamlString, ecsOutputStr, "yml"},
 	}
 
 	for _, test := range tests {
-		if output, err := getMapFromYaml(test.inputFileString); err != nil || fmt.Sprintf("%v", output) != test.outputString {
-			t.Error("Test Failed: {} inputted, {} expected, recieved: {}", test.inputFileString, test.outputString, output)
+		fileExtension = test.fileExtensionVal
+		appSpecModel := getEcsAppSpecObjFromString(test.fileStrInput)
+		if fmt.Sprintf("%v", appSpecModel) != test.objectStrOutput {
+			t.Errorf(appSpecStrConversionError)
 		}
 	}
 }
 
-func TestGetMapFromJson(t *testing.T) {
+func TestGetLambdaAppSpecObjFromString_ValidInput(t *testing.T) {
 	var tests = []struct {
-		name            string
-		inputFileString string
-		outputString    string
+		name             string
+		fileStrInput     string
+		objectStrOutput  string
+		fileExtensionVal string
 	}{
-		{"JSON file",
-			testJsonLambdaAppSpecFileString, testJsonLambdaAppSpecMap},
+		{"Valid JSON",
+			lambdaJsonString, lambdaOutputStr, "json"},
+
+		{"Valid YAML",
+			lambdaYamlString, lambdaOutputStr, "yml"},
 	}
 
 	for _, test := range tests {
-		if output, err := getMapFromJson(test.inputFileString); err != nil || fmt.Sprintf("%v", output) != test.outputString {
-			t.Error("Test Failed: {} inputted, {} expected, recieved: {}", test.inputFileString, test.outputString, output)
+		fileExtension = test.fileExtensionVal
+		appSpecModel := getLambdaAppSpecObjFromString(test.fileStrInput)
+		if fmt.Sprintf("%v", appSpecModel) != test.objectStrOutput {
+			t.Errorf(appSpecStrConversionError)
+		}
+	}
+}
+
+func TestGetEc2OnPremAppSpecObjFromString_ValidInput(t *testing.T) {
+	var tests = []struct {
+		name             string
+		fileStrInput     string
+		objectStrOutput  string
+		fileExtensionVal string
+	}{
+		{"Valid JSON",
+			ec2OnPremJsonString, ec2OnPremOutputStr, "json"},
+
+		{"Valid YAML",
+			ec2OnPremYamlString, ec2OnPremOutputStr, "yml"},
+	}
+
+	for _, test := range tests {
+		fileExtension = test.fileExtensionVal
+		appSpecModel := getEc2OnPremAppSpecObjFromString(test.fileStrInput)
+		if fmt.Sprintf("%v", appSpecModel) != test.objectStrOutput {
+			t.Errorf(appSpecStrConversionError)
+		}
+	}
+}
+
+func TestValidateEcsAppSpec_ValidInput(t *testing.T) {
+	var tests = []struct {
+		name             string
+		fileStrInput     string
+		fileExtensionVal string
+	}{
+		{"Valid YAML",
+			ecsYamlString, "yml"},
+	}
+
+	for _, test := range tests {
+		fileExtension = test.fileExtensionVal
+		appSpecModel := getEcsAppSpecObjFromString(test.fileStrInput)
+		err := validateEcsAppSpec(appSpecModel)
+		if err != nil {
+			t.Errorf(appSpecObjValidationError)
+		}
+	}
+}
+
+func TestValidateLambdaAppSpec_ValidInput(t *testing.T) {
+	var tests = []struct {
+		name             string
+		fileStrInput     string
+		fileExtensionVal string
+	}{
+		{"Valid YAML",
+			lambdaYamlString, "yml"},
+	}
+
+	for _, test := range tests {
+		fileExtension = test.fileExtensionVal
+		appSpecModel := getLambdaAppSpecObjFromString(test.fileStrInput)
+		err := validateLambdaAppSpec(appSpecModel)
+		if err != nil {
+			t.Errorf(appSpecObjValidationError)
+		}
+	}
+}
+
+func TestValidateEc2OnPremAppSpec_ValidInput(t *testing.T) {
+	var tests = []struct {
+		name             string
+		fileStrInput     string
+		fileExtensionVal string
+	}{
+		{"Valid YAML",
+			ec2OnPremYamlString, "yml"},
+	}
+
+	for _, test := range tests {
+		fileExtension = test.fileExtensionVal
+		appSpecModel := getEc2OnPremAppSpecObjFromString(test.fileStrInput)
+		err := validateEc2OnPremAppSpec(appSpecModel)
+		if err != nil {
+			t.Errorf(appSpecObjValidationError)
 		}
 	}
 }

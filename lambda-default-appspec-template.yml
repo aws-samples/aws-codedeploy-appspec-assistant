@@ -5,11 +5,11 @@ Resources:
   - myLambdaFunction:
       Type: AWS::Lambda::Function
       Properties:
-        Name: ""
-        Alias: ""
-        CurrentVersion: ""
-        TargetVersion: ""
+        Name: "myLambdaFunction"
+        Alias: "myLambdaFunctionAlias"
+        CurrentVersion: "1"
+        TargetVersion: "2"
 # https://docs.aws.amazon.com/codedeploy/latest/userguide/reference-appspec-file-structure-hooks.html#appspec-hooks-lambda
 #Hooks:
-#  - BeforeAllowTraffic: ""
-#  - AfterAllowTraffic: ""
+#  - BeforeAllowTraffic: "<SanityTestHookLambdaFunctionName>"
+#  - AfterAllowTraffic: "<ValidationTestHookLambdaFunctionName>"
