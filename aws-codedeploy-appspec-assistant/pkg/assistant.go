@@ -9,10 +9,14 @@ import (
 	"encoding/json"
 	"gopkg.in/yaml.v3"
 
-	//"aws-codedeploy-appspec-assistant/models"
+	"aws-codedeploy-appspec-assistant/models"
 )
 
 var fileExtension string
+
+var appSpecVersions = []float32{0.0}
+
+var appSpecVersionError = fmt.Errorf("ERROR: Version not supported. The only versions supported are: %v", appSpecVersions)
 
 func ValidateAppSpec(filePath string, computePlatform string) {
 	fmt.Println("validateAppSpec called on:", filePath, ",", computePlatform)
@@ -72,41 +76,125 @@ func isValidComputePlatform(computePlatform string) bool {
 }
 
 func runValidation(appSpec string, computePlatform string) {
-
-	var appSpecMap map[string]interface{}
 	var err error
 
-	if fileExtension == "yml" || fileExtension == "yaml" {
-		appSpecMap, err = getMapFromYaml(appSpec)
+	if computePlatform == "ecs" {
+		ecsAppSpecModel := getEcsAppSpecObjFromString(appSpec)
+		err = validateEcsAppSpec(ecsAppSpecModel)
+	} else if computePlatform == "lambda" {
+		lambdaAppSpecModel := getLambdaAppSpecObjFromString(appSpec)
+		err = validateLambdaAppSpec(lambdaAppSpecModel)
 	} else {
-		appSpecMap, err = getMapFromJson(appSpec)
+		ec2OnPremAppSpecModel := getEc2OnPremAppSpecObjFromString(appSpec)
+		err = validateEc2OnPremAppSpec(ec2OnPremAppSpecModel)
 	}
 
 	if err != nil {
 		handleError(err)
 	}
 
-	//check the appspec
-
 	fmt.Println("AppSpec file is valid")
-	fmt.Println(appSpec)
-	fmt.Println(appSpecMap)
 
 }
 
-func getMapFromYaml(appSpecYamlString string) (map[string]interface{}, error) {
-	var appSpecMapFromYaml map[string]interface{}
+func getEcsAppSpecObjFromString(appSpecString string) models.EcsAppSpecModel {
+	var err error
+	var ecsAppSpecModel models.EcsAppSpecModel
 
-	err := yaml.Unmarshal([]byte(appSpecYamlString), &appSpecMapFromYaml)
+	if fileExtension == "yml" {
+		err = yaml.Unmarshal([]byte(appSpecString), &ecsAppSpecModel)
+	} else {
+		err = json.Unmarshal([]byte(appSpecString), &ecsAppSpecModel)
+	}
 
-	return appSpecMapFromYaml, err
+	fmt.Println(ecsAppSpecModel)
+
+	if err != nil {
+		handleError(err)
+	}
+
+	return ecsAppSpecModel
 }
 
-func getMapFromJson(appSpecJaonString string) (map[string]interface{}, error) {
-	var appSpecMapFromJson map[string]interface{}
-	err := json.Unmarshal([]byte(appSpecJaonString), &appSpecMapFromJson)
+func getLambdaAppSpecObjFromString(appSpecString string) models.LambdaAppSpecModel {
+	var err error
+	var lambdaAppSpecModel models.LambdaAppSpecModel
 
-	return appSpecMapFromJson, err
+	if fileExtension == "yml" {
+		err = yaml.Unmarshal([]byte(appSpecString), &lambdaAppSpecModel)
+	} else {
+		err = json.Unmarshal([]byte(appSpecString), &lambdaAppSpecModel)
+	}
+
+	fmt.Println(lambdaAppSpecModel)
+
+	if err != nil {
+		handleError(err)
+	}
+
+	return lambdaAppSpecModel
+}
+
+func getEc2OnPremAppSpecObjFromString(appSpecString string) models.Ec2OnPremAppSpecModel {
+	var err error
+	var ec2OnPremAppSpecModel models.Ec2OnPremAppSpecModel
+
+	if fileExtension == "yml" {
+		err = yaml.Unmarshal([]byte(appSpecString), &ec2OnPremAppSpecModel)
+	} else {
+		err = json.Unmarshal([]byte(appSpecString), &ec2OnPremAppSpecModel)
+	}
+
+	fmt.Println(ec2OnPremAppSpecModel)
+
+	if err != nil {
+		handleError(err)
+	}
+
+	return ec2OnPremAppSpecModel
+}
+
+func validateEcsAppSpec(ecsAppSpecModel models.EcsAppSpecModel) error {
+	var err error
+
+	if !checkVersion(ecsAppSpecModel.Version) {
+		fmt.Println(appSpecVersionError)
+		err = appSpecVersionError
+	}
+
+	return err
+}
+
+func validateLambdaAppSpec(lambdaAppSpecModel models.LambdaAppSpecModel) error {
+	var err error
+
+	if !checkVersion(lambdaAppSpecModel.Version) {
+		fmt.Println(appSpecVersionError)
+		err = appSpecVersionError
+	}
+
+	return err
+}
+
+func validateEc2OnPremAppSpec(ec2OnPremAppSpecModel models.Ec2OnPremAppSpecModel) error {
+	var err error
+
+	if !checkVersion(ec2OnPremAppSpecModel.Version) {
+		fmt.Println(appSpecVersionError)
+		err = appSpecVersionError
+	}
+
+	return err
+}
+
+func checkVersion(version float32) bool {
+	for _, versionNum := range appSpecVersions {
+		if versionNum == version {
+			return true
+		}
+	}
+
+	return false
 }
 
 func handleError(err error) {

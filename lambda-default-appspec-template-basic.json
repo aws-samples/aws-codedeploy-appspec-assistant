@@ -5,10 +5,10 @@
       "myLambdaFunction": {
         "Type": "AWS::Lambda::Function",
         "Properties": {
-          "Name": "",
-          "Alias": "",
-          "CurrentVersion": "",
-          "TargetVersion": ""
+          "Name": "myLambdaFunction",
+          "Alias": "myLambdaFunctionAlias",
+          "CurrentVersion": "1",
+          "TargetVersion": "2"
         }
       }
     }

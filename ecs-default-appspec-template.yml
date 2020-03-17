@@ -5,20 +5,20 @@ Resources:
   - TargetService:
       Type: AWS::ECS::Service
       Properties:
-        TaskDefinition: ""
+        TaskDefinition: "[Your task definition arn]"
         LoadBalancerInfo:
-          ContainerName: ""
-          ContainerPort: 
-#        PlatformVersion: ""
+          ContainerName: "[Your container Name]"
+          ContainerPort: 8000
+#        PlatformVersion: "[Version number, ex: 1.3.0]"
 #        NetworkConfiguration:
 #          AwsvpcConfiguration:
-#            Subnets: ["",""]
-#            SecurityGroups: [""]
-#            AssignPublicIp: ""
+#            Subnets: ["SubnetId1","SubnetId2"]
+#            SecurityGroups: ["ecs-security-group-1"]
+#            AssignPublicIp: "ENABLED-or-DISABLED"
 # https://docs.aws.amazon.com/codedeploy/latest/userguide/reference-appspec-file-structure-hooks.html#appspec-hooks-ecs
 #Hooks:
-#  - BeforeInstall: ""
-#  - AfterInstall: ""
-#  - AfterAllowTestTraffic: ""
-#  - BeforeAllowTraffic: ""
-#  - AfterAllowTraffic: ""
+#  - BeforeInstall: "BeforeInstallHookLambdaFunctionName"
+#  - AfterInstall: "AfterInstallHookLambdaFunctionName"
+#  - AfterAllowTestTraffic: "AfterAllowTestTrafficHookLambdaFunctionName"
+#  - BeforeAllowTraffic: "SanityTestHookLambdaFunctionName"
+#  - AfterAllowTraffic: "ValidationTestHookLambdaFunctionName"

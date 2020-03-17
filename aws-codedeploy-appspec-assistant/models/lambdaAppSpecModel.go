@@ -1,24 +1,21 @@
 package models
 
 type LambdaAppSpecModel struct {
-	Version   string
-	Resources []LambdaResource
-	Hooks     map[string]string
-}
+	Version   float32               `json:"version" yaml:"version"`
+	Resources []map[string]Function `json:"Resources" yaml:"Resources"`
 
-type LambdaResource struct {
-	Type      string
-	Functions map[string]Function
+	// Optional
+	Hooks []map[string]string `json:"Hooks" yaml:"Hooks"`
 }
 
 type Function struct {
-	Type          string
-	PropertiesObj LambdaProperties
+	Type       string           `json:"Type" yaml:"Type"`
+	Properties LambdaProperties `json:"Properties" yaml:"Properties"`
 }
 
 type LambdaProperties struct {
-	Name           string
-	Alias          string
-	CurrentVersion string
-	TargetVersion  string
+	Name           string `json:"Name" yaml:"Name"`
+	Alias          string `json:"Alias" yaml:"Alias"`
+	CurrentVersion string `json:"CurrentVersion" yaml:"CurrentVersion"`
+	TargetVersion  string `json:"TargetVersion" yaml:"TargetVersion"`
 }
