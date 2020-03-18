@@ -1,7 +1,7 @@
 package assistant
 
 // ECS AppSpec strings for Unit Tests
-var ecsOutputStr = `{0 [{{AWS::ECS::Service {[Your task definition arn] {[Your container Name] 8000} [Version number, ex: 1.3.0] {{[SubnetId1 SubnetId2] [ecs-security-group-1] ENABLED-or-DISABLED}}}}}] [map[BeforeInstall:BeforeInstallHookLambdaFunctionName] map[AfterInstall:AfterInstallHookLambdaFunctionName] map[AfterAllowTestTraffic:AfterAllowTestTrafficHookLambdaFunctionName] map[BeforeAllowTraffic:SanityTestHookLambdaFunctionName] map[AfterAllowTraffic:ValidationTestHookLambdaFunctionName]]}`
+var ecsOutputStr = `{0 [{{AWS::ECS::Service {[Your task definition arn] {[Your container Name] 8000} [Version number, ex: 1.3.0] {{[SubnetId1 SubnetId2] [ecs-security-group-1] DISABLED}}}}}] [map[BeforeInstall:BeforeInstallHookLambdaFunctionName] map[AfterInstall:AfterInstallHookLambdaFunctionName] map[AfterAllowTestTraffic:AfterAllowTestTrafficHookLambdaFunctionName] map[BeforeAllowTraffic:SanityTestHookLambdaFunctionName] map[AfterAllowTraffic:ValidationTestHookLambdaFunctionName]]}`
 
 var ecsJsonString = `{
   "version": 0.0,
@@ -25,7 +25,7 @@ var ecsJsonString = `{
               "SecurityGroups": [
                 "ecs-security-group-1"
               ],
-              "AssignPublicIp": "ENABLED-or-DISABLED"
+              "AssignPublicIp": "DISABLED"
             }
           }
         }
@@ -65,7 +65,7 @@ Resources:
           AwsvpcConfiguration:
             Subnets: ["SubnetId1","SubnetId2"]
             SecurityGroups: ["ecs-security-group-1"]
-            AssignPublicIp: "ENABLED-or-DISABLED"
+            AssignPublicIp: "DISABLED"
 Hooks:
   - BeforeInstall: "BeforeInstallHookLambdaFunctionName"
   - AfterInstall: "AfterInstallHookLambdaFunctionName"
@@ -115,7 +115,7 @@ Hooks:
   - AfterAllowTraffic: "<ValidationTestHookLambdaFunctionName>"`
 
 // EC2/OnPrem AppSpec strings for Unit Tests
-var ec2OnPremOutputStr = `{0 linux [{source-file-location destination-file-location}] [{object-specification pattern-specification exception-specification owner-account-name group-name mode-specification [acls-specification] {user-specification type-specification range-specification} [object-type]}] map[deployment-lifecycle-event-name:[{script-location timeout-in-seconds user-name} {script-location timeout-in-seconds user-name}] deployment-lifecycle-event-name2:[{script-location timeout-in-seconds user-name}]]}`
+var ec2OnPremOutputStr = `{0 linux [{source-file-location destination-file-location}] [{object-specification pattern-specification exception-specification owner-account-name group-name mode-specification [acls-specification] {user-specification type-specification range-specification} [file]}] map[ApplicationStop:[{script-location 10 user-name} {script-location 10 user-name}] BeforeInstall:[{script-location 10 user-name}]]}`
 
 var ec2OnPremJsonString = `{
   "version": 0.0,
@@ -143,27 +143,27 @@ var ec2OnPremJsonString = `{
         "range": "range-specification"
       },
       "type": [
-        "object-type"
+        "file"
       ]
     }
   ],
   "hooks": {
-    "deployment-lifecycle-event-name": [
+    "ApplicationStop": [
       {
         "location": "script-location",
-        "timeout": "timeout-in-seconds",
+        "timeout": "10",
         "runas": "user-name"
       },
       {
         "location": "script-location",
-        "timeout": "timeout-in-seconds",
+        "timeout": "10",
         "runas": "user-name"
       }
     ],
-    "deployment-lifecycle-event-name2": [
+    "BeforeInstall": [
       {
         "location": "script-location",
-        "timeout": "timeout-in-seconds",
+        "timeout": "10",
         "runas": "user-name"
       }
     ]
@@ -191,17 +191,17 @@ permissions:
       type: type-specification
       range: range-specification
     type:
-      - object-type
+      - file
 # https://docs.aws.amazon.com/codedeploy/latest/userguide/reference-appspec-file-structure-hooks.html#appspec-hooks-server
 hooks:
-  deployment-lifecycle-event-name:
+  ApplicationStop:
     - location: script-location
-      timeout: timeout-in-seconds
+      timeout: 10
       runas: user-name
     - location: script-location
-      timeout: timeout-in-seconds
+      timeout: 10
       runas: user-name
-  deployment-lifecycle-event-name2:
+  BeforeInstall:
     - location: script-location
-      timeout: timeout-in-seconds
+      timeout: 10
       runas: user-name`
