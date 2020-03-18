@@ -37,9 +37,15 @@ EC2/OnPrem
 
 ## Getting started with the Validation Assistant Script
 
-You must have Go `1.13` or later installed.
+### Run validator script without having to deal with Golang
 
-## Capabilities
+You can download the pre-built binary from this repo
+
+```
+$ ./appSpecAssistant validate --filePath <FILE_PATH> --computePlatform <[ec2/on-prem, lambda, or ecs]>
+```
+
+## Capabilities of the Validation Assistant Script
 
 ### March 2020
 
@@ -52,13 +58,15 @@ You must have Go `1.13` or later installed.
  * Validates Hooks used
  * And more
 
-## Usage
+## Usage (building the script locally)
+
+You must have Go `1.13` or later installed.
 
 General workflow:
 
 ```
 # Validate an AppSPec file
-$ go run main.go validate --filePath <FILE_NAME>
+$ go run main.go validate --filePath <FILE_PATH> --computePlatform <[ec2/on-prem, lambda, or ecs]>
 ```
 
 Run `go run main.go --help` for full usage.
@@ -71,16 +79,12 @@ You can install appSpecAssistant on your machine to run the commands without hav
 # Install the binary to your GOPATH
 $ go build -o $GOPATH/bin/appSpecAssistant
 # Call appSpecAssistant
-$ appSpecAssistant validate -f <FILE_NAME>
+$ appSpecAssistant validate --filePath <FILE_PATH> --computePlatform <[ec2/on-prem, lambda, or ecs]>
 ```
 
-You can also download the pre-built binary from this repo
+## Development (adding changes to the script)
 
-```
-$ ./appSpecAssistant validate -f <FILE_NAME>
-```
-
-## Development
+You must have Go `1.13` or later installed.
 
 This CLI uses [cobra](https://github.com/spf13/cobra). See documentation for more information. Install the cobra CLI to auto-generate code for new CLI commands.
 * Used to auto-generate code for CLI
