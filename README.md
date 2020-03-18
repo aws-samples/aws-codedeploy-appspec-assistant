@@ -39,15 +39,18 @@ EC2/OnPrem
 
 You must have Go `1.13` or later installed.
 
-## Releases
+## Capabilities
 
-#### V1
+### March 2020
 
-* Basic JSON and YAML parsing and file extension validation
-
-#### V2 - Upcoming
-
-* AppSpec file structure validation and limited value validation
+* Validates file extension
+* Validates YAML and JSON syntax
+* Does basic validation for ECS, Lambda, and EC2/On-Prem AppSpec file content
+ * Validates type of values
+ * Validates values that are required
+ * Validates values that require specific strings
+ * Validates Hooks used
+ * And more
 
 ## Usage
 

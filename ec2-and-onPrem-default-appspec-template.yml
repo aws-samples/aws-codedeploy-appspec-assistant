@@ -23,14 +23,14 @@ files:
 #      - object-type
 # https://docs.aws.amazon.com/codedeploy/latest/userguide/reference-appspec-file-structure-hooks.html#appspec-hooks-server
 #hooks:
-#  deployment-lifecycle-event-name:
+#  ApplicationStop:
 #    - location: script-location
-#      timeout: timeout-in-seconds
+#      timeout: 10
 #      runas: user-name
 #    - location: script-location
-#      timeout: timeout-in-seconds
+#      timeout: 10
 #      runas: user-name
-#  deployment-lifecycle-event-name2:
+#  BeforeInstall:
 #    - location: script-location
-#      timeout: timeout-in-seconds
+#      timeout: 10
 #      runas: user-name

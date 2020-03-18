@@ -29,22 +29,22 @@
     }
   ],
   "hooks": {
-    "deployment-lifecycle-event-name": [
+    "ApplicationStop": [
       {
         "location": "script-location",
-        "timeout": "timeout-in-seconds",
+        "timeout": "10",
         "runas": "user-name"
       },
       {
         "location": "script-location",
-        "timeout": "timeout-in-seconds",
+        "timeout": "10",
         "runas": "user-name"
       }
     ],
-    "deployment-lifecycle-event-name2": [
+    "BeforeInstall": [
       {
         "location": "script-location",
-        "timeout": "timeout-in-seconds",
+        "timeout": "10",
         "runas": "user-name"
       }
     ]
