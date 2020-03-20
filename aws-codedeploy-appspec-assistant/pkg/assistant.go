@@ -18,7 +18,7 @@ import (
 var fileExtension string
 
 var appSpecVersions = []string{"0.0"}
-var appSpecVersionError = fmt.Errorf("ERROR: Version not supported. The only versions supported are: %v", appSpecVersions)
+var appSpecVersionError = fmt.Errorf("\nERROR CAUSE: Version not supported. The only versions supported are: %v", appSpecVersions)
 
 var appSpecSupportedOSs = []string{"linux", "windows"}
 
@@ -26,34 +26,41 @@ var appSpecSupportedEcsHooks = []string{"BeforeInstall", "AfterInstall", "AfterA
 var appSpecSupportedLambdaHooks = []string{"BeforeAllowTraffic", "AfterAllowTraffic"}
 var appSpecSupportedEc2OnPremHooksWithLB = []string{"BeforeBlockTraffic", "AfterBlockTraffic", "BeforeAllowTraffic", "AfterAllowTraffic"}
 var appSpecSupportedEc2OnPremHooksWithoutLB = []string{"ApplicationStop", "BeforeInstall", "AfterInstall", "ApplicationStart", "ValidateService"}
-var appSpecEc2OnPremHooksError = fmt.Errorf("ERROR: The hooks must be one of the Ec2/OnPrem supported hooks.\n Deployments without a LoadBalancer: %v \n Deployments with a LoadBalancer: %v", appSpecSupportedEc2OnPremHooksWithoutLB, appSpecSupportedEc2OnPremHooksWithLB)
+var appSpecEc2OnPremHooksError = fmt.Errorf("\nERROR CAUSE: The hooks must be one of the Ec2/OnPrem supported hooks.\n Deployments without a LoadBalancer: %v \n Deployments with a LoadBalancer: %v", appSpecSupportedEc2OnPremHooksWithoutLB, appSpecSupportedEc2OnPremHooksWithLB)
 
 var appSpecEcsAssignPublicIpValues = []string{"ENABLED", "DISABLED"}
+
+var numOfErrors int = 0
 
 // Main function
 func ValidateAppSpec(filePath string, computePlatform string) {
 	fmt.Println("validateAppSpec called on:", filePath, ",", computePlatform)
 
 	if len(filePath) < 1 {
-		handleError(fmt.Errorf("ERROR: Empty filePath is not allowed"))
+		numOfErrors++
+		handleError(fmt.Errorf("\nERROR CAUSE: Empty filePath is not allowed"))
 	}
 
 	if !isValidComputePlatform(computePlatform) {
-		handleError(fmt.Errorf("ERROR: computePlatform must be ec2/on-prem, lambda, or ecs"))
+		numOfErrors++
+		handleError(fmt.Errorf("\nERROR CAUSE: computePlatform must be ec2/on-prem, lambda, or ecs"))
 	}
 
 	if !isValidFileExtension(filePath) {
-		handleError(fmt.Errorf("ERROR: File extension must be .json or .yml"))
+		numOfErrors++
+		handleError(fmt.Errorf("\nERROR CAUSE: File extension must be .json or .yml"))
 	}
 
 	if _, err := os.Stat(filePath); err != nil { // Path does not exist
+		numOfErrors++
 		handleError(err)
 	}
 
 	appSpec := loadAppSpec(filePath)
 
 	if len(appSpec) < 1 {
-		handleError(fmt.Errorf("ERROR: AppSpec file is empty"))
+		numOfErrors++
+		handleError(fmt.Errorf("\nERROR CAUSE: AppSpec file is empty"))
 	}
 
 	runValidation(appSpec, computePlatform)
@@ -63,6 +70,7 @@ func loadAppSpec(filePath string) string {
 	raw_appSpec, err := ioutil.ReadFile(filePath)
 
 	if err != nil {
+		numOfErrors++
 		handleError(err)
 	}
 
@@ -98,6 +106,7 @@ func runValidation(appSpec string, computePlatform string) {
 	err = validateVersionString(appSpec)
 
 	if err != nil {
+		numOfErrors++
 		handleError(err)
 	}
 
@@ -232,7 +241,7 @@ func validateEcsAppSpec(ecsAppSpecModel models.EcsAppSpecModel) error {
 	// Hooks (Optional)
 	if ecsAppSpecModel.Hooks != nil && len(ecsAppSpecModel.Hooks) > 0 {
 		if !validateEcsHooks(ecsAppSpecModel.Hooks) {
-			err = fmt.Errorf("ERROR: The hooks must be one of the ECS supported hooks: %v", appSpecSupportedEcsHooks)
+			err = fmt.Errorf("ERROR: The hooks and their function values must be valid")
 			fmt.Println(err)
 		}
 	}
@@ -269,14 +278,16 @@ func validateEc2OnPremAppSpec(ec2OnPremAppSpecModel models.Ec2OnPremAppSpecModel
 
 	// OS
 	if ec2OnPremAppSpecModel.OS == "" || !checkOS(ec2OnPremAppSpecModel.OS) {
-		osError := fmt.Errorf("ERROR: OS not supported. Only 1 OS supported at a time. The only OSs supported are: %v", appSpecSupportedOSs)
+		numOfErrors++
+		osError := fmt.Errorf("\nERROR CAUSE: OS not supported. Only 1 OS supported at a time. The only OSs supported are: %v", appSpecSupportedOSs)
 		fmt.Println(osError)
 		err = osError
 	}
 
 	// Files
 	if ec2OnPremAppSpecModel.Files == nil || len(ec2OnPremAppSpecModel.Files) < 1 {
-		err = fmt.Errorf("ERROR: There must be at least 1 File(source, destination) specification")
+		numOfErrors++
+		err = fmt.Errorf("\nERROR CAUSE: There must be at least 1 File(source, destination) specification")
 		fmt.Println(err)
 	} else {
 		if !validateEc2OnPremFiles(ec2OnPremAppSpecModel.Files) {
@@ -311,7 +322,8 @@ func validateEcsResources(ecsResources []models.Resource) bool {
 	resourcesValid := true
 
 	if len(ecsResources) > 1 {
-		fmt.Println(fmt.Errorf("ERROR: Only 1 ECS resource (TargetService) supported in a deployment"))
+		numOfErrors++
+		fmt.Println(fmt.Errorf("\nERROR CAUSE: Only 1 ECS resource (TargetService) supported in a deployment"))
 		return false
 	}
 
@@ -319,7 +331,8 @@ func validateEcsResources(ecsResources []models.Resource) bool {
 		// Resource Type
 		if ecsResource.TargetService.Type != "AWS::ECS::Service" {
 			resourcesValid = false
-			fmt.Println(fmt.Errorf("ERROR: TargetService Type must be AWS::ECS::Service"))
+			numOfErrors++
+			fmt.Println(fmt.Errorf("\nERROR CAUSE: TargetService Type must be AWS::ECS::Service"))
 		}
 
 		// Resource Properties
@@ -338,7 +351,8 @@ func validateEcsResourceProperties(ecsProperties models.EcsProperties) bool {
 	// TaskDefinition
 	if ecsProperties.TaskDefinition == "" {
 		propertiesValid = false
-		fmt.Println(fmt.Errorf("ERROR: Resources -> TargetService -> Properties -> TaskDefinition must not be empty (ECS TaskDefinition)"))
+		numOfErrors++
+		fmt.Println(fmt.Errorf("\nERROR CAUSE: Resources -> TargetService -> Properties -> TaskDefinition must not be empty (ECS TaskDefinition)"))
 	}
 
 	// LoadBalancerInfo
@@ -365,7 +379,8 @@ func validateEcsLoadBalancerInfo(ecsLoadBalancerInfo models.LoadBalancerInfo, ta
 
 	if ecsLoadBalancerInfo.ContainerName == "" {
 		infoValid = false
-		fmt.Println(fmt.Errorf("ERROR: Resources -> TargetService -> Properties -> LoadBalancerInfo ... ContainerName missing for: %s", taskDefinition))
+		numOfErrors++
+		fmt.Println(fmt.Errorf("\nERROR CAUSE: Resources -> TargetService -> Properties -> LoadBalancerInfo ... ContainerName missing for: %s", taskDefinition))
 	}
 
 	if ecsLoadBalancerInfo.ContainerPort == 0 {
@@ -394,34 +409,40 @@ func validateEcsAwsvpcConfiguration(ecsAwsvpcConfiguration models.AwsvpcConfigur
 
 	if ecsAwsvpcConfiguration.Subnets == nil || len(ecsAwsvpcConfiguration.Subnets) < 1 {
 		configValid = false
-		fmt.Println(fmt.Errorf("ERROR: Resources -> TargetService -> Properties -> AwsvpcConfiguration ... Subnets missing for: %s", taskDefinition))
+		numOfErrors++
+		fmt.Println(fmt.Errorf("\nERROR CAUSE: Resources -> TargetService -> Properties -> AwsvpcConfiguration ... Subnets missing for: %s", taskDefinition))
 	} else {
 		for _, subnet := range ecsAwsvpcConfiguration.Subnets {
 			if subnet == "" {
 				configValid = false
-				fmt.Println(fmt.Errorf("ERROR: Resources -> TargetService -> Properties -> AwsvpcConfiguration ... Subnets cannot be empty strings for: %s", taskDefinition))
+				numOfErrors++
+				fmt.Println(fmt.Errorf("\nERROR CAUSE: Resources -> TargetService -> Properties -> AwsvpcConfiguration ... Subnets cannot be empty strings for: %s", taskDefinition))
 			}
 		}
 	}
 
 	if ecsAwsvpcConfiguration.SecurityGroups == nil || len(ecsAwsvpcConfiguration.SecurityGroups) < 1 {
 		configValid = false
-		fmt.Println(fmt.Errorf("ERROR: Resources -> TargetService -> Properties -> AwsvpcConfiguration ... SecurityGroups missing for: %s", taskDefinition))
+		numOfErrors++
+		fmt.Println(fmt.Errorf("\nERROR CAUSE: Resources -> TargetService -> Properties -> AwsvpcConfiguration ... SecurityGroups missing for: %s", taskDefinition))
 	} else {
 		for _, securityGroup := range ecsAwsvpcConfiguration.SecurityGroups {
 			if securityGroup == "" {
 				configValid = false
-				fmt.Println(fmt.Errorf("ERROR: Resources -> TargetService -> Properties -> AwsvpcConfiguration ... SecurityGroups cannot be empty strings for: %s", taskDefinition))
+				numOfErrors++
+				fmt.Println(fmt.Errorf("\nERROR CAUSE: Resources -> TargetService -> Properties -> AwsvpcConfiguration ... SecurityGroups cannot be empty strings for: %s", taskDefinition))
 			}
 		}
 	}
 
 	if ecsAwsvpcConfiguration.AssignPublicIp == "" {
 		configValid = false
-		fmt.Println(fmt.Errorf("ERROR: Resources -> TargetService -> Properties -> AwsvpcConfiguration ... AssignPublicIp missing for: %s", taskDefinition))
+		numOfErrors++
+		fmt.Println(fmt.Errorf("\nERROR CAUSE: Resources -> TargetService -> Properties -> AwsvpcConfiguration ... AssignPublicIp missing for: %s", taskDefinition))
 	} else if !validateEcsAssignPublicIpValue(ecsAwsvpcConfiguration.AssignPublicIp) {
 		configValid = false
-		fmt.Println(fmt.Errorf("ERROR: Resources -> TargetService -> Properties -> AwsvpcConfiguration ... AssignPublicIp invalid (should be ENABLED or DISABLED) for: %s", taskDefinition))
+		numOfErrors++
+		fmt.Println(fmt.Errorf("\nERROR CAUSE: Resources -> TargetService -> Properties -> AwsvpcConfiguration ... AssignPublicIp invalid (should be ENABLED or DISABLED) for: %s", taskDefinition))
 	}
 
 	return configValid
@@ -444,7 +465,8 @@ func validateLambdaResources(lambdaResources []map[string]models.Function) bool 
 	resourcesValid := true
 
 	if len(lambdaResources) > 1 {
-		fmt.Println(fmt.Errorf("ERROR: Only 1 Lambda resource (Function) supported in a deployment"))
+		fmt.Println(fmt.Errorf("\nERROR CAUSE: Only 1 Lambda resource (Function) supported in a deployment"))
+		numOfErrors++
 		return false
 	}
 
@@ -454,13 +476,15 @@ func validateLambdaResources(lambdaResources []map[string]models.Function) bool 
 			// Function Name
 			if functionResourceName == "" {
 				resourcesValid = false
-				fmt.Println(fmt.Errorf("ERROR: Value should not be empty for FunctionName of Resource"))
+				numOfErrors++
+				fmt.Println(fmt.Errorf("\nERROR CAUSE: Value should not be empty for FunctionName of Resource"))
 			}
 
 			// Function Type
 			if function.Type != "AWS::Lambda::Function" {
 				resourcesValid = false
-				fmt.Println(fmt.Errorf("ERROR: Function Type must be AWS::Lambda::Function"))
+				numOfErrors++
+				fmt.Println(fmt.Errorf("\nERROR CAUSE: Function Type must be AWS::Lambda::Function"))
 			}
 
 			// Function Properties
@@ -479,22 +503,26 @@ func validateLambdaResourceProperties(lambdaProperties models.LambdaProperties, 
 
 	if lambdaProperties.Name == "" {
 		propertiesValid = false
-		fmt.Println(fmt.Errorf("ERROR: Resources -> <Function> -> Properties -> Name must not be empty (Lambda Function Name) : %s", functionResourceName))
+		numOfErrors++
+		fmt.Println(fmt.Errorf("\nERROR CAUSE: Resources -> <Function> -> Properties -> Name must not be empty (Lambda Function Name) : %s", functionResourceName))
 	}
 
 	if lambdaProperties.Alias == "" {
 		propertiesValid = false
-		fmt.Println(fmt.Errorf("ERROR: Resources -> <Function> -> Properties -> Alias must not be empty (Lambda Function Alias) : %s", functionResourceName))
+		numOfErrors++
+		fmt.Println(fmt.Errorf("\nERROR CAUSE: Resources -> <Function> -> Properties -> Alias must not be empty (Lambda Function Alias) : %s", functionResourceName))
 	}
 
 	if lambdaProperties.CurrentVersion == "" {
 		propertiesValid = false
-		fmt.Println(fmt.Errorf("ERROR: Resources -> <Function> -> Properties -> CurrentVersion must not be empty (Lambda Function current version, ex: 1) : %s", functionResourceName))
+		numOfErrors++
+		fmt.Println(fmt.Errorf("\nERROR CAUSE: Resources -> <Function> -> Properties -> CurrentVersion must not be empty (Lambda Function current version, ex: 1) : %s", functionResourceName))
 	}
 
 	if lambdaProperties.TargetVersion == "" {
 		propertiesValid = false
-		fmt.Println(fmt.Errorf("ERROR: Resources -> <Function> -> Properties -> TargetVersion must not be empty (Lambda Function target version to flip to, ex: 2) : %s", functionResourceName))
+		numOfErrors++
+		fmt.Println(fmt.Errorf("\nERROR CAUSE: Resources -> <Function> -> Properties -> TargetVersion must not be empty (Lambda Function target version to flip to, ex: 2) : %s", functionResourceName))
 	}
 
 	return propertiesValid
@@ -519,12 +547,14 @@ func validateEc2OnPremFiles(files []models.File) bool {
 	for _, file := range files {
 		if file.Source == "" {
 			filesValid = false
-			fmt.Println(fmt.Errorf("ERROR: Missing File Source (Source-Destination pairs must be set together)"))
+			numOfErrors++
+			fmt.Println(fmt.Errorf("\nERROR CAUSE: Missing File Source (Source-Destination pairs must be set together)"))
 		}
 
 		if file.Destination == "" {
 			filesValid = false
-			fmt.Println(fmt.Errorf("ERROR: Missing File Destination (Source-Destination pairs must be set together)"))
+			numOfErrors++
+			fmt.Println(fmt.Errorf("\nERROR CAUSE: Missing File Destination (Source-Destination pairs must be set together)"))
 		}
 	}
 
@@ -539,14 +569,16 @@ func validateEc2OnPremPermissions(permissions []models.Permission) bool {
 	for _, permission := range permissions {
 		if permission.Object == "" {
 			permissionsValid = false
-			fmt.Println(fmt.Errorf("ERROR: Object cannot be empty for permission: %v", permission))
+			numOfErrors++
+			fmt.Println(fmt.Errorf("\nERROR CAUSE: Object cannot be empty for permission: %v", permission))
 		}
 
 		if permission.Type != nil && len(permission.Type) > 0 {
 			for _, typeStr := range permission.Type {
 				if typeStr != "" && typeStr != "file" && typeStr != "directory" {
 					permissionsValid = false
-					fmt.Println(fmt.Errorf("ERROR: If Permission Type is specifiec, it must be `file` or `direcory` for permission: %v", permission))
+					numOfErrors++
+					fmt.Println(fmt.Errorf("\nERROR CAUSE: If Permission Type is specifiec, it must be `file` or `direcory` for permission: %v", permission))
 				}
 			}
 		}
@@ -568,7 +600,8 @@ func validateEcsHooks(ecsHooks []map[string]string) bool {
 		for _, hook := range appSpecSupportedEcsHooks {
 			if val, ok := ecsHook[hook]; ok {
 				if val == "" {
-					fmt.Println(fmt.Errorf("ERROR: Value cannot be empty for hook: %s", hook))
+					fmt.Println(fmt.Errorf("\nERROR CAUSE: Value cannot be empty for hook: %s", hook))
+					numOfErrors++
 					hooksValid = false
 				}
 				numValidHooks++
@@ -577,6 +610,8 @@ func validateEcsHooks(ecsHooks []map[string]string) bool {
 	}
 
 	if numValidHooks != len(ecsHooks) {
+		numOfErrors++
+		fmt.Println(fmt.Errorf("\nERROR CAUSE: The hooks must be one of the ECS supported hooks: %v", appSpecSupportedEcsHooks))
 		hooksValid = false
 	}
 
@@ -593,7 +628,8 @@ func validateLambdaHooks(lambdaHooks []map[string]string) bool {
 		for _, hook := range appSpecSupportedLambdaHooks {
 			if val, ok := lambdaHook[hook]; ok {
 				if val == "" {
-					fmt.Println(fmt.Errorf("ERROR: Value cannot be empty for hook: %s", hook))
+					fmt.Println(fmt.Errorf("\nERROR CAUSE: Value cannot be empty for hook: %s", hook))
+					numOfErrors++
 					hooksValid = false
 				}
 				numValidHooks++
@@ -602,6 +638,7 @@ func validateLambdaHooks(lambdaHooks []map[string]string) bool {
 	}
 
 	if numValidHooks != len(lambdaHooks) {
+		numOfErrors++
 		hooksValid = false
 	}
 
@@ -641,6 +678,7 @@ func validateEc2OnPremHooks(ec2OnPremHooks map[string][]models.Hook) bool {
 	}
 
 	if !(numValidHooks == len(ec2OnPremHooks)) {
+		numOfErrors++
 		fmt.Println(appSpecEc2OnPremHooksError)
 	}
 
@@ -653,7 +691,8 @@ func validateEc2OnPremHookScripts(hookScriptList []models.Hook, hook string) boo
 	for _, hookScript := range hookScriptList {
 		if hookScript.Location == "" {
 			scriptsValid = false
-			fmt.Println(fmt.Errorf("ERROR: The hook must have a script location: %s", hook))
+			numOfErrors++
+			fmt.Println(fmt.Errorf("\nERROR CAUSE: The hook must have a script location: %s", hook))
 		}
 
 		if hookScript.Timeout != "" {
@@ -665,7 +704,8 @@ func validateEc2OnPremHookScripts(hookScriptList []models.Hook, hook string) boo
 			}
 			totalTimeout += i
 			if totalTimeout > 3600 {
-				fmt.Println(fmt.Errorf("ERROR: Total timeout for all scripts within a single LifecycleEvent added up must not exceed 3600 seconds. : %s", hook))
+				numOfErrors++
+				fmt.Println(fmt.Errorf("\nERROR CAUSE: Total timeout for all scripts within a single LifecycleEvent added up must not exceed 3600 seconds. : %s", hook))
 				scriptsValid = false
 			}
 		}
@@ -676,6 +716,8 @@ func validateEc2OnPremHookScripts(hookScriptList []models.Hook, hook string) boo
 
 func handleError(err error) {
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
+		fmt.Println(fmt.Errorf("\nThe AppSpec is not valid. There are %d errors.", numOfErrors))
+		os.Exit(1)
 	}
 }
