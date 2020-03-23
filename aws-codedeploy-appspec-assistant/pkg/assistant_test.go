@@ -11,41 +11,39 @@ import (
 var appSpecStrConversionError string = "The appSpecModel does not match the expected output model"
 var appSpecObjValidationError string = "The valid appSpec object threw errors during validation"
 
-// Test ValidateAppSpec
-func TestValidateAppSpec_InvalidInput(t *testing.T) {
+// Test validateUserInput
+func TestValidateUserInput_InvalidInput(t *testing.T) {
 	var tests = []struct {
-		name             string
-		filePathInput    string
-		computeTypeInput string
+		name                string
+		filePathInput       string
+		computeTypeInput    string
+		expectedErrorOutput string
 	}{
 		{"Empty filePath",
-			"", "lambda"},
+			"", "lambda", "ERROR CAUSE: Empty filePath is not allowed"},
 
-		{"Invalid filePath",
-			"/appSpec_assistant_test/testPath.txt", "lambda"},
-
-		{"Invalid yaml filePath",
-			"/appSpec_assistant_test/testPath.yaml", "lambda"},
+		{"Invalid filePath extension",
+			"/appSpec_assistant_test/testPath.txt", "lambda", "ERROR CAUSE: File extension must be .json or .yml"},
 
 		{"Empty computeType",
-			"/appSpec_assistant_test/testPath.yml", ""},
+			"/appSpec_assistant_test/testPath.yml", "", "ERROR CAUSE: computePlatform must be ec2/on-prem, lambda, or ecs"},
 
 		{"Invalid computeType",
-			"/appSpec_assistant_test/testPath.json", "invalidComputeType"},
+			"/appSpec_assistant_test/testPath.json", "invalidComputeType", "ERROR CAUSE: computePlatform must be ec2/on-prem, lambda, or ecs"},
+
+		{"YAML and Lambda",
+			"/appSpec_assistant_test/testPath.yml", "lambda", "no such file or directory"},
 	}
 
 	for _, test := range tests {
-		defer func() {
-			if r := recover(); r == nil {
-				t.Log(r)
-				t.Errorf("The code did not panic for: %v", test)
-			}
-		}()
-		ValidateAppSpec(test.filePathInput, test.computeTypeInput)
+		err := validateUserInput(test.filePathInput, test.computeTypeInput)
+		if (err == nil) || (!strings.Contains(fmt.Sprintf("%v", err), test.expectedErrorOutput)) {
+			t.Errorf("The code did not error correctly for: %v. Got this error instead of expected: %v", test, err)
+		}
 	}
 }
 
-func TestValidateAppSpec_ValidInput(t *testing.T) {
+func TestValidateUserInput_ValidInput(t *testing.T) {
 	var tests = []struct {
 		name             string
 		filePathInput    string
@@ -71,19 +69,15 @@ func TestValidateAppSpec_ValidInput(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		defer func() {
-			if r := recover(); r == nil {
-				t.Log(r)
-				t.Errorf("The code did not panic for: %v", test)
-			} else if !strings.Contains(fmt.Sprintf("%v", r), "no such file or directory") {
-				t.Errorf("The test failed before checking if the path exists for: %v", test)
+		if err := validateUserInput(test.filePathInput, test.computeTypeInput); err != nil {
+			if !strings.Contains(fmt.Sprintf("%v", err), "no such file or directory") {
+				t.Errorf("The code should not error for: %v. Got this error: %v", test, err)
 			}
-		}()
-		ValidateAppSpec(test.filePathInput, test.computeTypeInput)
+		}
 	}
 }
 
-// Test GetEcsAppSpecObjFromString
+// Test getEcsAppSpecObjFromString
 func TestGetEcsAppSpecObjFromString_ValidInput(t *testing.T) {
 	var tests = []struct {
 		name             string
@@ -107,7 +101,7 @@ func TestGetEcsAppSpecObjFromString_ValidInput(t *testing.T) {
 	}
 }
 
-// Test GetLambdaAppSpecObjFromString
+// Test getLambdaAppSpecObjFromString
 func TestGetLambdaAppSpecObjFromString_ValidInput(t *testing.T) {
 	var tests = []struct {
 		name             string
@@ -131,7 +125,7 @@ func TestGetLambdaAppSpecObjFromString_ValidInput(t *testing.T) {
 	}
 }
 
-// Test GetEc2OnPremAppSpecObjFromString
+// Test getEc2OnPremAppSpecObjFromString
 func TestGetEc2OnPremAppSpecObjFromString_ValidInput(t *testing.T) {
 	var tests = []struct {
 		name             string
@@ -155,7 +149,7 @@ func TestGetEc2OnPremAppSpecObjFromString_ValidInput(t *testing.T) {
 	}
 }
 
-// Test ValidateEcsAppSpec
+// Test validateEcsAppSpec
 func TestValidateEcsAppSpec_ValidInput(t *testing.T) {
 	var tests = []struct {
 		name             string
@@ -176,7 +170,7 @@ func TestValidateEcsAppSpec_ValidInput(t *testing.T) {
 	}
 }
 
-// Test ValidateLambdaAppSpec
+// Test validateLambdaAppSpec
 func TestValidateLambdaAppSpec_ValidInput(t *testing.T) {
 	var tests = []struct {
 		name             string
@@ -197,7 +191,7 @@ func TestValidateLambdaAppSpec_ValidInput(t *testing.T) {
 	}
 }
 
-// Test ValidateEc2OnPremAppSpec
+// Test validateEc2OnPremAppSpec
 func TestValidateEc2OnPremAppSpec_ValidInput(t *testing.T) {
 	var tests = []struct {
 		name             string
@@ -218,7 +212,7 @@ func TestValidateEc2OnPremAppSpec_ValidInput(t *testing.T) {
 	}
 }
 
-// Test ValidateVersionString
+// Test validateVersionString
 func TestValidateVersionString_ValidInput(t *testing.T) {
 	var tests = []struct {
 		name               string
@@ -265,7 +259,7 @@ func TestValidateVersionString_InvalidInput(t *testing.T) {
 	}
 }
 
-// Test CheckOS
+// Test checkOS
 func TestCheckOS_ValidInput(t *testing.T) {
 	var tests = []struct {
 		name          string
@@ -304,7 +298,7 @@ func TestCheckOS_InvalidInput(t *testing.T) {
 	}
 }
 
-// Test ValidateEcsHooks
+// Test validateEcsHooks
 func TestValidateEcsHooks_ValidInput(t *testing.T) {
 	var tests = []struct {
 		name       string
@@ -345,7 +339,7 @@ func TestValidateEcsHooks_InvalidInput(t *testing.T) {
 	}
 }
 
-// Test ValidateLambdaHooks
+// Test validateLambdaHooks
 func TestValidateLambdaHooks_ValidInput(t *testing.T) {
 	var tests = []struct {
 		name       string
@@ -386,7 +380,7 @@ func TestValidateLambdaHooks_InvalidInput(t *testing.T) {
 	}
 }
 
-// Test ValidateEc2OnPremHooks
+// Test validateEc2OnPremHooks
 func TestValidateEc2OnPremHooks_ValidInput(t *testing.T) {
 	var tests = []struct {
 		name       string
@@ -694,7 +688,7 @@ func TestValidateLambdaResources_InvalidInput(t *testing.T) {
 	}
 }
 
-// Test ValidateEcsResources
+// Test validateEcsResources
 func TestValidateEcsResources_ValidInput(t *testing.T) {
 	var tests = []struct {
 		name           string
@@ -1068,7 +1062,7 @@ func TestValidateEcsResources_InvalidInput(t *testing.T) {
 	}
 }
 
-// Test IsEcsNetworkConfigurationFilledOut
+// Test isEcsNetworkConfigurationFilledOut
 func TestIsEcsNetworkConfigurationFilledOut_FilledOutInput(t *testing.T) {
 	var tests = []struct {
 		name               string

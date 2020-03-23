@@ -36,23 +36,7 @@ var numOfErrors int = 0
 func ValidateAppSpec(filePath string, computePlatform string) {
 	fmt.Println("validateAppSpec called on:", filePath, ",", computePlatform)
 
-	if len(filePath) < 1 {
-		numOfErrors++
-		handleError(fmt.Errorf("\nERROR CAUSE: Empty filePath is not allowed"))
-	}
-
-	if !isValidComputePlatform(computePlatform) {
-		numOfErrors++
-		handleError(fmt.Errorf("\nERROR CAUSE: computePlatform must be ec2/on-prem, lambda, or ecs"))
-	}
-
-	if !isValidFileExtension(filePath) {
-		numOfErrors++
-		handleError(fmt.Errorf("\nERROR CAUSE: File extension must be .json or .yml"))
-	}
-
-	if _, err := os.Stat(filePath); err != nil { // Path does not exist
-		numOfErrors++
+	if err := validateUserInput(filePath, computePlatform); err != nil {
 		handleError(err)
 	}
 
@@ -64,6 +48,31 @@ func ValidateAppSpec(filePath string, computePlatform string) {
 	}
 
 	runValidation(appSpec, computePlatform)
+}
+
+func validateUserInput(filePath string, computePlatform string) error {
+
+	if len(filePath) < 1 {
+		numOfErrors++
+		return fmt.Errorf("\nERROR CAUSE: Empty filePath is not allowed")
+	}
+
+	if !isValidComputePlatform(computePlatform) {
+		numOfErrors++
+		return fmt.Errorf("\nERROR CAUSE: computePlatform must be ec2/on-prem, lambda, or ecs")
+	}
+
+	if !isValidFileExtension(filePath) {
+		numOfErrors++
+		return fmt.Errorf("\nERROR CAUSE: File extension must be .json or .yml")
+	}
+
+	if _, err := os.Stat(filePath); err != nil { // Path does not exist
+		numOfErrors++
+		return err
+	}
+
+	return nil
 }
 
 func loadAppSpec(filePath string) string {
@@ -716,8 +725,11 @@ func validateEc2OnPremHookScripts(hookScriptList []models.Hook, hook string) boo
 
 func handleError(err error) {
 	if err != nil {
-		fmt.Println(err)
-		fmt.Println(fmt.Errorf("\nThe AppSpec is not valid. There are %d errors.", numOfErrors))
-		os.Exit(1)
+		defer func() {
+			fmt.Println(err)
+			fmt.Println(fmt.Errorf("\nThe AppSpec is not valid. There are %d errors.", numOfErrors))
+			os.Exit(1)
+		}()
+		panic(err)
 	}
 }
