@@ -37,6 +37,10 @@ EC2/OnPrem
 
 ## Getting started with the Validation Assistant Script
 
+### **WARNING**
+
+This script validates basic expected syntax for the AppSpec. It does not guarantee that your deployment will succeed nor that your AppSpec will do what you expect it to.
+
 ### Run validator script without having to deal with Golang
 
 You can download the pre-built binary from this repo
