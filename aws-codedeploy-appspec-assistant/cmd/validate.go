@@ -25,7 +25,7 @@ func init() {
 	rootCmd.AddCommand(validateCmd)
 
 	validateCmd.PersistentFlags().StringVar(&filePath, "filePath", "", "FilePath of AppSpec file to validate")
-	validateCmd.PersistentFlags().StringVar(&computePlatform, "computePlatform", "", "computePlatform of AppSpec file (ec2/on-prem, lambda, ecs)")
+	validateCmd.PersistentFlags().StringVar(&computePlatform, "computePlatform", "", "computePlatform of AppSpec file (server, lambda, ecs)")
 
 	validateCmd.MarkFlagRequired("filePath")
 	validateCmd.MarkFlagRequired("computePlatform")

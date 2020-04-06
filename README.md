@@ -45,8 +45,14 @@ This script validates basic expected syntax for the AppSpec. It does not guarant
 
 You can download the pre-built binary from this repo
 
+Linux:
 ```
-$ ./appSpecAssistant validate --filePath <FILE_PATH> --computePlatform <[ec2/on-prem, lambda, or ecs]>
+$ ./appSpecAssistant validate --filePath <FILE_PATH> --computePlatform <[server, lambda, or ecs]>
+```
+
+Windows:
+```
+./appSpecAssistantForWindows.exe validate --filePath <FILE_PATH> --computePlatform <[server, lambda, or ecs]>
 ```
 
 ## Capabilities of the Validation Assistant Script
@@ -55,7 +61,7 @@ $ ./appSpecAssistant validate --filePath <FILE_PATH> --computePlatform <[ec2/on-
 
 * Validates file extension
 * Validates YAML and JSON syntax
-* Does basic validation for ECS, Lambda, and EC2/On-Prem AppSpec file content
+* Does basic validation for ECS, Lambda, and Server (EC2/On-Prem) AppSpec file content
  * Validates type of values
  * Validates values that are required
  * Validates values that require specific strings
@@ -70,7 +76,7 @@ General workflow:
 
 ```
 # Validate an AppSPec file
-$ go run main.go validate --filePath <FILE_PATH> --computePlatform <[ec2/on-prem, lambda, or ecs]>
+$ go run main.go validate --filePath <FILE_PATH> --computePlatform <[server, lambda, or ecs]>
 ```
 
 Run `go run main.go --help` for full usage.
@@ -79,11 +85,28 @@ Run `go run main.go --help` for full usage.
 
 You can install appSpecAssistant on your machine to run the commands without having to build the binary every time.
 
+For Linux on Linux:
 ```
-# Install the binary to your GOPATH
+# Install the binary to your GOPATH (or you can just build it in the current directory $ go build -o appSpecAssistant)
 $ go build -o $GOPATH/bin/appSpecAssistant
 # Call appSpecAssistant
-$ appSpecAssistant validate --filePath <FILE_PATH> --computePlatform <[ec2/on-prem, lambda, or ecs]>
+$ appSpecAssistant validate --filePath <FILE_PATH> --computePlatform <[server, lambda, or ecs]>
+```
+
+For Windows on Linux:
+https://github.com/golang/go/wiki/WindowsCrossCompiling
+```
+GOOS=windows GOARCH=386 go build -o appSpecAssistantForWindows.exe main.go
+```
+
+For Windows on Windows:
+https://github.com/golang/go/wiki/WindowsCrossCompiling
+```
+In cmd.exe instead of PowerShell:
+
+$ set GOOS=windows
+$ set GOARCH=386
+$ go build -o hello.exe hello.go
 ```
 
 ## Development (adding changes to the script)
