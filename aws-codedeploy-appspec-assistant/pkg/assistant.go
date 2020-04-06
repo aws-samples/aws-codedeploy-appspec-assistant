@@ -59,7 +59,7 @@ func validateUserInput(filePath string, computePlatform string) error {
 
 	if !isValidComputePlatform(computePlatform) {
 		numOfErrors++
-		return fmt.Errorf("\nERROR CAUSE: computePlatform must be ec2/on-prem, lambda, or ecs")
+		return fmt.Errorf("\nERROR CAUSE: computePlatform must be server, lambda, or ecs")
 	}
 
 	if !isValidFileExtension(filePath) {
@@ -98,7 +98,7 @@ func isValidFileExtension(filePath string) bool {
 }
 
 func isValidComputePlatform(computePlatform string) bool {
-	if computePlatform == "ec2/on-prem" || computePlatform == "lambda" || computePlatform == "ecs" {
+	if computePlatform == "server" || computePlatform == "lambda" || computePlatform == "ecs" {
 		return true
 	}
 
@@ -280,7 +280,7 @@ func validateLambdaAppSpec(lambdaAppSpecModel models.LambdaAppSpecModel) error {
 	return err
 }
 
-// Validate EC2/On-Prem AppSpec
+// Validate EC2/On-Prem (Server) AppSpec
 // Calls validation on each section
 func validateEc2OnPremAppSpec(ec2OnPremAppSpecModel models.Ec2OnPremAppSpecModel) error {
 	var err error
@@ -549,7 +549,7 @@ func checkOS(appSpecOS string) bool {
 	return false
 }
 
-// EC2/On-Prem FIles Validation method
+// EC2/On-Prem (Server) Files Validation method
 // Validate the files object values
 func validateEc2OnPremFiles(files []models.File) bool {
 	filesValid := true
@@ -570,7 +570,7 @@ func validateEc2OnPremFiles(files []models.File) bool {
 	return filesValid
 }
 
-// EC2/On-Prem Permissions Validation method
+// EC2/On-Prem (Server) Permissions Validation method
 // Validate the Permissions object values
 func validateEc2OnPremPermissions(permissions []models.Permission) bool {
 	permissionsValid := true
@@ -679,7 +679,7 @@ func validateEc2OnPremHooks(ec2OnPremHooks map[string][]models.Hook) bool {
 	fmt.Println("WARNING: runas under Hook Scripts only applies to Amazon Linux and Ubuntu Server instances. The user also cannot require a password. Leave blank for agent default.")
 
 	if withLBHooksUsed {
-		fmt.Println("WARNING: EC2/On-Prem hooks for LoadBalancers used, so the deployments should use a LoadBalancer for these scripts to be run.")
+		fmt.Println("WARNING: EC2/On-Prem (Server) hooks for LoadBalancers used, so the deployments should use a LoadBalancer for these scripts to be run.")
 	}
 
 	if numValidHooks == len(ec2OnPremHooks) && hookScriptsValid {
