@@ -6,21 +6,21 @@ This repo contains Default AppSpec examples and a script to validate an AppSpec 
 Lambda
 
 * lambda-default-appspec-template.yml
- * Contains links and more info
+  * Contains links and more info
 * lambda-default-appspec-template-basic.json
 * lambda-default-appspec-template-advanced.json
 
 ECS
 
 * ecs-default-appspec-template.yml
- * Contains links and more info
+  * Contains links and more info
 * ecs-default-appspec-template-basic.json
 * ecs-default-appspec-template-advanced.json
 
 EC2/OnPrem
 
 * ec2-and-onPrem-default-appspec-template.yml
- * Contains links and more info
+  * Contains links and more info
 * ec2-and-onPrem-default-appspec-template-basic.json
 * ec2-and-onPrem-default-appspec-template-advanced.json
 
@@ -35,7 +35,7 @@ ECS
 EC2/OnPrem
 * [appspec-reference-server](https://docs.aws.amazon.com/codedeploy/latest/userguide/reference-appspec-file.html#appspec-reference-server)
 
-## Getting started with the Validation Assistant Script
+## Validation Assistant Script
 
 ### **WARNING**
 
@@ -43,7 +43,7 @@ This script validates basic expected syntax for the AppSpec. It does not guarant
 
 ### Run validator script without having to deal with Golang
 
-You can download the pre-built binary from this repo
+You can download a pre-built binary from this repo
 
 Linux:
 ```
@@ -55,24 +55,24 @@ Windows:
 ./appSpecAssistantForWindows.exe validate --filePath <FILE_PATH> --computePlatform <[server, lambda, or ecs]>
 ```
 
-## Capabilities of the Validation Assistant Script
+### Capabilities of the Validation Assistant Script
 
-### March 2020
+#### March 2020
 
 * Validates file extension
 * Validates YAML and JSON syntax
 * Does basic validation for ECS, Lambda, and Server (EC2/On-Prem) AppSpec file content
- * Validates type of values
- * Validates values that are required
- * Validates values that require specific strings
- * Validates Hooks used
- * And more
+  * Validates type of values
+  * Validates values that are required
+  * Validates values that require specific strings
+  * Validates Hooks used
+  * And more basic validations
 
-## Usage (building the script locally)
+### Building the Golang Validation Assistant Script Locally
 
 You must have Go `1.13` or later installed.
 
-General workflow:
+#### General workflow:
 
 ```
 # Validate an AppSPec file
@@ -81,7 +81,7 @@ $ go run main.go validate --filePath <FILE_PATH> --computePlatform <[server, lam
 
 Run `go run main.go --help` for full usage.
 
-# Install on your machine
+#### Install Script on your machine
 
 You can install appSpecAssistant on your machine to run the commands without having to build the binary every time.
 
@@ -109,7 +109,7 @@ $ set GOARCH=386
 $ go build -o hello.exe hello.go
 ```
 
-## Development (adding changes to the script)
+### Development (adding changes to the script)
 
 You must have Go `1.13` or later installed.
 
