@@ -23,16 +23,19 @@ func TestValidateUserInput_InvalidInput(t *testing.T) {
 			"", "lambda", "ERROR CAUSE: Empty filePath is not allowed"},
 
 		{"Invalid filePath extension",
-			"/appSpec_assistant_test/testPath.txt", "lambda", "ERROR CAUSE: File extension must be .json or .yml"},
+			"/appSpec_assistant_test/appspec.txt", "lambda", "ERROR CAUSE: File must be named appspec and file extension must be .json or .yml (appspec.json or appspec.yml)"},
+
+		{"Invalid filePath file name",
+			"/appSpec_assistant_test/incorrect.yml", "lambda", "ERROR CAUSE: File must be named appspec and file extension must be .json or .yml (appspec.json or appspec.yml)"},
 
 		{"Empty computeType",
-			"/appSpec_assistant_test/testPath.yml", "", "ERROR CAUSE: computePlatform must be ec2/on-prem, lambda, or ecs"},
+			"/appSpec_assistant_test/appspec.yml", "", "ERROR CAUSE: computePlatform must be server, lambda, or ecs"},
 
 		{"Invalid computeType",
-			"/appSpec_assistant_test/testPath.json", "invalidComputeType", "ERROR CAUSE: computePlatform must be ec2/on-prem, lambda, or ecs"},
+			"/appSpec_assistant_test/appspec.json", "invalidComputeType", "ERROR CAUSE: computePlatform must be server, lambda, or ecs"},
 
 		{"YAML and Lambda",
-			"/appSpec_assistant_test/testPath.yml", "lambda", "no such file or directory"},
+			"/appSpec_assistant_test/appspec.yml", "lambda", "no such file or directory"},
 	}
 
 	for _, test := range tests {
@@ -50,22 +53,22 @@ func TestValidateUserInput_ValidInput(t *testing.T) {
 		computeTypeInput string
 	}{
 		{"YAML and Lambda",
-			"/appSpec_assistant_test/testPath.yml", "lambda"},
+			"/appSpec_assistant_test/appspec.yml", "lambda"},
 
 		{"YAML and EC2",
-			"/appSpec_assistant_test/testPath.yml", "ec2/on-prem"},
+			"/appSpec_assistant_test/appspec.yml", "server"},
 
 		{"YAML and ECS",
-			"/appSpec_assistant_test/testPath.yml", "ecs"},
+			"/appSpec_assistant_test/appspec.yml", "ecs"},
 
 		{"JSON and Lambda",
-			"/appSpec_assistant_test/testPath.json", "lambda"},
+			"/appSpec_assistant_test/appspec.json", "lambda"},
 
 		{"JSON and EC2",
-			"/appSpec_assistant_test/testPath.json", "ec2/on-prem"},
+			"/appSpec_assistant_test/appspec.json", "server"},
 
 		{"JSON and ECS",
-			"/appSpec_assistant_test/testPath.json", "ecs"},
+			"/appSpec_assistant_test/appspec.json", "ecs"},
 	}
 
 	for _, test := range tests {

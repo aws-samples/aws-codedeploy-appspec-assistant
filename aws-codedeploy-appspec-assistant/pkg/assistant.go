@@ -62,9 +62,9 @@ func validateUserInput(filePath string, computePlatform string) error {
 		return fmt.Errorf("\nERROR CAUSE: computePlatform must be server, lambda, or ecs")
 	}
 
-	if !isValidFileExtension(filePath) {
+	if !isValidFileNameAndExtension(filePath) {
 		numOfErrors++
-		return fmt.Errorf("\nERROR CAUSE: File extension must be .json or .yml")
+		return fmt.Errorf("\nERROR CAUSE: File must be named appspec and file extension must be .json or .yml (appspec.json or appspec.yml)")
 	}
 
 	if _, err := os.Stat(filePath); err != nil { // Path does not exist
@@ -86,11 +86,9 @@ func loadAppSpec(filePath string) string {
 	return string(raw_appSpec)
 }
 
-func isValidFileExtension(filePath string) bool {
-	filePathSplit := strings.Split(filePath, ".")
-	fileExtension = filePathSplit[len(filePathSplit)-1]
+func isValidFileNameAndExtension(filePath string) bool {
 
-	if fileExtension == "json" || fileExtension == "yml" {
+	if strings.HasSuffix(filePath, "appspec.json") || strings.HasSuffix(filePath, "appspec.yml") {
 		return true
 	}
 
