@@ -35,6 +35,20 @@ ECS
 EC2/OnPrem
 * [appspec-reference-server](https://docs.aws.amazon.com/codedeploy/latest/userguide/reference-appspec-file.html#appspec-reference-server)
 
+## Expected Server Zip File Structure
+
+```
+# CodeDeploy expects there to be no top-level folder around the AppSpec 
+# So when it is unzipped, the AppSpec is put at the top level of the current directory
+# NOTE: The scripts folder is optional and the scripts folder location in this example is just a suggestion. It can be put elsewhere in the zip
+
+example.zip
+- appspec.yml
+- scripts/
+ - afterAllowTrafficScript.sh
+- Rest of the files/folders to be deployed
+```
+
 ## Validation Assistant Script
 
 ### **WARNING**
@@ -144,6 +158,9 @@ Run unit tests
 
 ```
 $ go test -v ./pkg/*
+
+# Get percentage of test coverage
+go test -coverprofile=cover.out ./pkg/*
 ```
 
 Format code:

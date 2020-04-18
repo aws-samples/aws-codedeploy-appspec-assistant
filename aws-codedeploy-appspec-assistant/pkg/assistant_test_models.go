@@ -114,10 +114,10 @@ Hooks:
   - BeforeAllowTraffic: "<SanityTestHookLambdaFunctionName>"
   - AfterAllowTraffic: "<ValidationTestHookLambdaFunctionName>"`
 
-// EC2/OnPrem AppSpec strings for Unit Tests
-var ec2OnPremOutputStr = `{0 linux [{source-file-location destination-file-location}] [{object-specification pattern-specification exception-specification owner-account-name group-name mode-specification [acls-specification] {user-specification type-specification range-specification} [file]}] map[ApplicationStop:[{script-location 10 user-name} {script-location 10 user-name}] BeforeInstall:[{script-location 10 user-name}]]}`
+// EC2/OnPrem (Server) AppSpec strings for Unit Tests
+var serverOutputStr = `{0 linux [{source-file-location destination-file-location}] [{object-specification pattern-specification exception-specification owner-account-name group-name mode-specification [acls-specification] {user-specification type-specification range-specification} [file]}] map[ApplicationStop:[{script-location 10 user-name} {script-location 10 user-name}] BeforeInstall:[{script-location 10 user-name}]]}`
 
-var ec2OnPremJsonString = `{
+var serverJsonString = `{
   "version": 0.0,
   "os": "linux",
   "files": [
@@ -170,7 +170,7 @@ var ec2OnPremJsonString = `{
   }
 }`
 
-var ec2OnPremYamlString = `version: 0.0
+var serverYamlString = `version: 0.0
 os: linux
 # https://docs.aws.amazon.com/codedeploy/latest/userguide/reference-appspec-file-structure-files.html
 files:
