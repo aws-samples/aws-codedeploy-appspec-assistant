@@ -6,3 +6,4 @@ go fmt
 go fmt ./cmd/*
 go fmt ./pkg/*
 go fmt ./models/*
+go fmt ./globalVars/*
