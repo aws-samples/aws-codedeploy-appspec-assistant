@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"aws-codedeploy-appspec-assistant/globalVars"
 	"aws-codedeploy-appspec-assistant/models"
 )
 
@@ -20,19 +21,19 @@ func TestValidateUserInput_InvalidInput(t *testing.T) {
 		expectedErrorOutput string
 	}{
 		{"Empty filePath",
-			"", "lambda", "ERROR CAUSE: Empty filePath is not allowed"},
+			"", "lambda", globalVars.EmptyFilePathErr.Error()},
 
 		{"Invalid filePath extension",
-			"/appSpec_assistant_test/appspec.txt", "lambda", "ERROR CAUSE: File must be named appspec and file extension must be .json or .yml (appspec.json or appspec.yml)"},
+			"/appSpec_assistant_test/appspec.txt", "lambda", globalVars.InvalidFileNameOrExtensionErr.Error()},
 
 		{"Invalid filePath file name",
-			"/appSpec_assistant_test/incorrect.yml", "lambda", "ERROR CAUSE: File must be named appspec and file extension must be .json or .yml (appspec.json or appspec.yml)"},
+			"/appSpec_assistant_test/incorrect.yml", "lambda", globalVars.InvalidFileNameOrExtensionErr.Error()},
 
 		{"Empty computeType",
-			"/appSpec_assistant_test/appspec.yml", "", "ERROR CAUSE: computePlatform must be server, lambda, or ecs"},
+			"/appSpec_assistant_test/appspec.yml", "", globalVars.ComputePlatformErr.Error()},
 
 		{"Invalid computeType",
-			"/appSpec_assistant_test/appspec.json", "invalidComputeType", "ERROR CAUSE: computePlatform must be server, lambda, or ecs"},
+			"/appSpec_assistant_test/appspec.json", "invalidComputeType", globalVars.ComputePlatformErr.Error()},
 
 		{"YAML and Lambda",
 			"/appSpec_assistant_test/appspec.yml", "lambda", "no such file or directory"},
