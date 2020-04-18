@@ -5,7 +5,7 @@ import (
 )
 
 // General
-var AppSpecVersionErr = fmt.Errorf("\nERROR CAUSE: Version not supported. The only versions supported are: %v", AppSpecVersions)
+var AppSpecVersionErr = fmt.Errorf("\nERROR CAUSE: Version not supported. Version should be in this format: JSON - \"version\": 0.0, YAML - version: 0.0. The only versions supported are: %v", AppSpecVersions)
 
 var EmptyAppSpecFileErr = fmt.Errorf("\nERROR CAUSE: AppSpec file is empty")
 
