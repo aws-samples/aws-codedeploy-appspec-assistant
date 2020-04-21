@@ -24,8 +24,8 @@ func TestGetEcsAppSpecObjFromString_ValidInput(t *testing.T) {
 
 	for _, test := range tests {
 		fileExtension = test.fileExtensionVal
-		appSpecModel := getEcsAppSpecObjFromString([]byte(test.fileStrInput))
-		if fmt.Sprintf("%v", appSpecModel) != test.objectStrOutput {
+		appSpecModel, err := getEcsAppSpecObjFromString([]byte(test.fileStrInput))
+		if err != nil || fmt.Sprintf("%v", appSpecModel) != test.objectStrOutput {
 			t.Errorf(appSpecStrConversionError)
 		}
 	}
@@ -44,7 +44,10 @@ func TestValidateEcsAppSpec_ValidInput(t *testing.T) {
 
 	for _, test := range tests {
 		fileExtension = test.fileExtensionVal
-		appSpecModel := getEcsAppSpecObjFromString([]byte(test.fileStrInput))
+		appSpecModel, modelErr := getEcsAppSpecObjFromString([]byte(test.fileStrInput))
+		if modelErr != nil {
+			t.Errorf("getEcsAppSpecObjFromString FAILED")
+		}
 		err := validateEcsAppSpec(appSpecModel)
 		if err != nil {
 			t.Errorf(appSpecObjValidationError)

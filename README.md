@@ -160,7 +160,7 @@ Run unit tests
 $ go test -v ./pkg/*
 
 # Get percentage of test coverage
-go test -coverprofile=cover.out ./pkg/*
+$ go test -coverprofile=cover.out ./pkg/*
 ```
 
 Format code:

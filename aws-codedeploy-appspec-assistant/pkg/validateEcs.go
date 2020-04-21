@@ -6,13 +6,14 @@ import (
 	"encoding/json"
 	"gopkg.in/yaml.v3"
 
+	"aws-codedeploy-appspec-assistant/errorHandling"
 	"aws-codedeploy-appspec-assistant/globalVars"
 	"aws-codedeploy-appspec-assistant/models"
 )
 
 // Convert ECS AppSpec string to ECS AppSpec Object
 // Deals with JSON adn YAML
-func getEcsAppSpecObjFromString(appSpecBytes []byte) models.EcsAppSpecModel {
+func getEcsAppSpecObjFromString(appSpecBytes []byte) (models.EcsAppSpecModel, error) {
 	var err error
 	var ecsAppSpecModel models.EcsAppSpecModel
 
@@ -25,12 +26,7 @@ func getEcsAppSpecObjFromString(appSpecBytes []byte) models.EcsAppSpecModel {
 	// Uncomment to print resulting Object for debug
 	//fmt.Println(ecsAppSpecModel)
 
-	if err != nil {
-		fmt.Print("\nERROR:")
-		handleError(err)
-	}
-
-	return ecsAppSpecModel
+	return ecsAppSpecModel, err
 }
 
 // Validate ECS AppSpec
@@ -40,15 +36,18 @@ func validateEcsAppSpec(ecsAppSpecModel models.EcsAppSpecModel) error {
 
 	// Resources
 	if ecsAppSpecModel.Resources == nil || len(ecsAppSpecModel.Resources) < 0 || !validateEcsResources(ecsAppSpecModel.Resources) {
-		err = globalVars.InvalidECSResourcesErr
-		fmt.Println(err)
+		err = fmt.Errorf(errorHandling.InvalidECSResourcesErr)
 	}
 
 	// Hooks (Optional)
 	if ecsAppSpecModel.Hooks != nil && len(ecsAppSpecModel.Hooks) > 0 {
+		// Print resource error (if there is one) since there could be Hooks errors that change the final error message
+		if err != nil {
+			fmt.Println("ERROR: " + err.Error())
+		}
+
 		if !validateEcsHooks(ecsAppSpecModel.Hooks) {
-			err = globalVars.InvalidECSHooksAndFunctionsErr
-			fmt.Println(err)
+			err = fmt.Errorf(errorHandling.InvalidECSHooksAndFunctionsErr)
 		}
 	}
 
@@ -63,7 +62,7 @@ func validateEcsResources(ecsResources []models.Resource) bool {
 
 	if len(ecsResources) > 1 {
 		numOfErrors++
-		fmt.Println(globalVars.UnsupportedNumberOfECSResourcesErr)
+		fmt.Println(errorHandling.UnsupportedNumberOfECSResourcesErr)
 		return false
 	}
 
@@ -72,13 +71,13 @@ func validateEcsResources(ecsResources []models.Resource) bool {
 		if ecsResource.TargetService.Type != "AWS::ECS::Service" {
 			resourcesValid = false
 			numOfErrors++
-			fmt.Println(globalVars.InvalidECSTargetServiceTypeErr)
+			fmt.Println(errorHandling.InvalidECSTargetServiceTypeErr)
 		}
 
 		// Resource Properties
 		if !validateEcsResourceProperties(ecsResource.TargetService.Properties) {
 			resourcesValid = false
-			fmt.Println(globalVars.InvalidECSTargetServicePropsErr)
+			fmt.Println(errorHandling.InvalidECSTargetServicePropsErr)
 		}
 	}
 
@@ -92,13 +91,13 @@ func validateEcsResourceProperties(ecsProperties models.EcsProperties) bool {
 	if ecsProperties.TaskDefinition == "" {
 		propertiesValid = false
 		numOfErrors++
-		fmt.Println(globalVars.EmptyECSTaskDefErr)
+		fmt.Println(errorHandling.EmptyECSTaskDefErr)
 	}
 
 	// LoadBalancerInfo
 	if !validateEcsLoadBalancerInfo(ecsProperties.LoadBalancerInfo, ecsProperties.TaskDefinition) {
 		propertiesValid = false
-		fmt.Println(globalVars.InvalidECSLoadBalancerInfoErr)
+		fmt.Println(errorHandling.InvalidECSLoadBalancerInfoErr)
 	}
 
 	// PlatformVersion (Optional)
@@ -107,7 +106,7 @@ func validateEcsResourceProperties(ecsProperties models.EcsProperties) bool {
 	if isEcsNetworkConfigurationFilledOut(ecsProperties.NetworkConfiguration) {
 		if !validateEcsAwsvpcConfiguration(ecsProperties.NetworkConfiguration.AwsvpcConfiguration, ecsProperties.TaskDefinition) {
 			propertiesValid = false
-			fmt.Println(globalVars.InvalidECSNetworkConfigurationErr)
+			fmt.Println(errorHandling.InvalidECSNetworkConfigurationErr)
 		}
 	}
 
@@ -120,11 +119,11 @@ func validateEcsLoadBalancerInfo(ecsLoadBalancerInfo models.LoadBalancerInfo, ta
 	if ecsLoadBalancerInfo.ContainerName == "" {
 		infoValid = false
 		numOfErrors++
-		fmt.Println(globalVars.MissingECSContainerNameErr.Error() + taskDefinition)
+		fmt.Println(errorHandling.MissingECSContainerNameErr, taskDefinition)
 	}
 
 	if ecsLoadBalancerInfo.ContainerPort == 0 {
-		fmt.Println(globalVars.ZeroECSContainerPortWarn.Error() + taskDefinition)
+		fmt.Println(errorHandling.ZeroECSContainerPortWarn, taskDefinition)
 	}
 
 	return infoValid
@@ -150,13 +149,13 @@ func validateEcsAwsvpcConfiguration(ecsAwsvpcConfiguration models.AwsvpcConfigur
 	if ecsAwsvpcConfiguration.Subnets == nil || len(ecsAwsvpcConfiguration.Subnets) < 1 {
 		configValid = false
 		numOfErrors++
-		fmt.Println(globalVars.MissingECSSubnetsErr.Error() + taskDefinition)
+		fmt.Println(errorHandling.MissingECSSubnetsErr, taskDefinition)
 	} else {
 		for _, subnet := range ecsAwsvpcConfiguration.Subnets {
 			if subnet == "" {
 				configValid = false
 				numOfErrors++
-				fmt.Println(globalVars.EmptyECSSubnetStrsErr.Error() + taskDefinition)
+				fmt.Println(errorHandling.EmptyECSSubnetStrsErr, taskDefinition)
 			}
 		}
 	}
@@ -164,13 +163,13 @@ func validateEcsAwsvpcConfiguration(ecsAwsvpcConfiguration models.AwsvpcConfigur
 	if ecsAwsvpcConfiguration.SecurityGroups == nil || len(ecsAwsvpcConfiguration.SecurityGroups) < 1 {
 		configValid = false
 		numOfErrors++
-		fmt.Println(globalVars.MissingECSSecurityGroupsErr.Error() + taskDefinition)
+		fmt.Println(errorHandling.MissingECSSecurityGroupsErr, taskDefinition)
 	} else {
 		for _, securityGroup := range ecsAwsvpcConfiguration.SecurityGroups {
 			if securityGroup == "" {
 				configValid = false
 				numOfErrors++
-				fmt.Println(globalVars.EmptyECSSecurityGroupStrsErr.Error() + taskDefinition)
+				fmt.Println(errorHandling.EmptyECSSecurityGroupStrsErr, taskDefinition)
 			}
 		}
 	}
@@ -178,11 +177,11 @@ func validateEcsAwsvpcConfiguration(ecsAwsvpcConfiguration models.AwsvpcConfigur
 	if ecsAwsvpcConfiguration.AssignPublicIp == "" {
 		configValid = false
 		numOfErrors++
-		fmt.Println(globalVars.MissingECSAssignPublicIpErr.Error() + taskDefinition)
+		fmt.Println(errorHandling.MissingECSAssignPublicIpErr, taskDefinition)
 	} else if !validateEcsAssignPublicIpValue(ecsAwsvpcConfiguration.AssignPublicIp) {
 		configValid = false
 		numOfErrors++
-		fmt.Println(globalVars.InvalidECSAssignPublicIpErr.Error() + taskDefinition)
+		fmt.Println(errorHandling.InvalidECSAssignPublicIpErr, taskDefinition)
 	}
 
 	return configValid
@@ -208,7 +207,7 @@ func validateEcsHooks(ecsHooks []map[string]string) bool {
 		for _, hook := range globalVars.AppSpecSupportedEcsHooks {
 			if val, ok := ecsHook[hook]; ok {
 				if val == "" {
-					fmt.Println(globalVars.EmptyEcsHookValErr.Error() + hook)
+					fmt.Println(errorHandling.EmptyEcsHookValErr, hook)
 					numOfErrors++
 					hooksValid = false
 				}
@@ -219,7 +218,7 @@ func validateEcsHooks(ecsHooks []map[string]string) bool {
 
 	if numValidHooks != len(ecsHooks) {
 		numOfErrors++
-		fmt.Println(globalVars.InvalidEcsHookStrErr)
+		fmt.Println(errorHandling.InvalidEcsHookStrErr, globalVars.AppSpecSupportedEcsHooks)
 		hooksValid = false
 	}
 
