@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 
+	"aws-codedeploy-appspec-assistant/errorHandling"
 	"aws-codedeploy-appspec-assistant/globalVars"
 )
 
@@ -18,60 +19,53 @@ func ValidateAppSpec(filePath string, computePlatform string) {
 	fmt.Println("validateAppSpec called on:", filePath, ",", computePlatform)
 
 	if err := validateUserInput(filePath, computePlatform); err != nil {
-		handleError(err)
+		errorHandling.HandleError(err)
 	}
 
-	appSpec := loadAppSpec(filePath)
+	// Load AppSpec
+	raw_appSpec, err := ioutil.ReadFile(filePath)
+	if err != nil {
+		errorHandling.HandleError(err)
+	}
 
-	if len(string(appSpec)) < 1 {
+	if len(string(raw_appSpec)) < 1 {
 		numOfErrors++
-		handleError(globalVars.EmptyAppSpecFileErr)
+		errorHandling.HandleError(fmt.Errorf(errorHandling.EmptyAppSpecFileErr))
 	}
 
-	runValidation(appSpec, computePlatform)
+	if validationErr := runValidation(raw_appSpec, computePlatform); validationErr != nil {
+		errorHandling.HandleError(validationErr)
+	}
+
+	fmt.Println("AppSpec file has passed available validation checks")
 }
 
 func validateUserInput(filePath string, computePlatform string) error {
 
 	if len(filePath) < 1 {
 		numOfErrors++
-		return globalVars.EmptyFilePathErr
+		return fmt.Errorf(errorHandling.EmptyFilePathErr)
 	}
 
 	if !isValidComputePlatform(computePlatform) {
 		numOfErrors++
-		return globalVars.ComputePlatformErr
+		return fmt.Errorf(errorHandling.ComputePlatformErr)
 	}
 
 	if !isValidFileNameAndExtension(filePath) {
 		numOfErrors++
-		return globalVars.InvalidFileNameOrExtensionErr
+		return fmt.Errorf(errorHandling.InvalidFileNameOrExtensionErr)
 	}
 
-	// Very IMPORTANT. Do NOT delete
+	// Very IMPORTANT. Do NOT delete. Need to set fileExtension variable
 	saveFileExtension(filePath)
 
 	if _, err := os.Stat(filePath); err != nil { // Path does not exist
 		numOfErrors++
-		if err != nil {
-			fmt.Print("\nERROR:")
-		}
 		return err
 	}
 
 	return nil
-}
-
-func loadAppSpec(filePath string) []byte {
-	raw_appSpec, err := ioutil.ReadFile(filePath)
-
-	if err != nil {
-		numOfErrors++
-		fmt.Print("\nERROR:")
-		handleError(err)
-	}
-
-	return raw_appSpec
 }
 
 func isValidFileNameAndExtension(filePath string) bool {
@@ -98,7 +92,7 @@ func isValidComputePlatform(computePlatform string) bool {
 // Starts validation fo the AppSpec file content
 // Converts string into AppSpec Objects
 // Runs validationon the AppSpec Objects
-func runValidation(appSpec []byte, computePlatform string) {
+func runValidation(appSpec []byte, computePlatform string) error {
 	var err error
 
 	// Validate version before converting AppSpec to objects
@@ -106,26 +100,30 @@ func runValidation(appSpec []byte, computePlatform string) {
 
 	if err != nil {
 		numOfErrors++
-		handleError(err)
+		return err
 	}
 
 	if computePlatform == "ecs" {
-		ecsAppSpecModel := getEcsAppSpecObjFromString(appSpec)
+		ecsAppSpecModel, modelErr := getEcsAppSpecObjFromString(appSpec)
+		if modelErr != nil {
+			return modelErr
+		}
 		err = validateEcsAppSpec(ecsAppSpecModel)
 	} else if computePlatform == "lambda" {
-		lambdaAppSpecModel := getLambdaAppSpecObjFromString(appSpec)
+		lambdaAppSpecModel, modelErr := getLambdaAppSpecObjFromString(appSpec)
+		if modelErr != nil {
+			return modelErr
+		}
 		err = validateLambdaAppSpec(lambdaAppSpecModel)
 	} else {
-		serverAppSpecModel := getServerAppSpecObjFromString(appSpec)
+		serverAppSpecModel, modelErr := getServerAppSpecObjFromString(appSpec)
+		if modelErr != nil {
+			return modelErr
+		}
 		err = validateServerAppSpec(serverAppSpecModel)
 	}
 
-	if err != nil {
-		handleError(err)
-	}
-
-	fmt.Println("AppSpec file is valid")
-
+	return err
 }
 
 // Validate Version string in all types of AppSpec
@@ -143,7 +141,7 @@ func validateVersionString(appSpecString string) error {
 				if appSpecStrSpaceSplit[i+1] == version {
 					return nil
 				}
-				return globalVars.AppSpecVersionErr
+				return fmt.Errorf(errorHandling.AppSpecVersionErr, globalVars.AppSpecVersions)
 			}
 
 			// JSON
@@ -152,21 +150,10 @@ func validateVersionString(appSpecString string) error {
 					(appSpecStrSpaceSplit[i+1] == version+"}") {
 					return nil
 				}
-				return globalVars.AppSpecVersionErr
+				return fmt.Errorf(errorHandling.AppSpecVersionErr, globalVars.AppSpecVersions)
 			}
 		}
 	}
 
-	return globalVars.AppSpecVersionErr
-}
-
-func handleError(err error) {
-	if err != nil {
-		defer func() {
-			fmt.Println("Panic CAUSE: " + err.Error())
-			fmt.Println(fmt.Errorf("The AppSpec is not valid. %d errors were found during validation.", numOfErrors))
-			os.Exit(1)
-		}()
-		panic(err)
-	}
+	return fmt.Errorf(errorHandling.AppSpecVersionErr, globalVars.AppSpecVersions)
 }

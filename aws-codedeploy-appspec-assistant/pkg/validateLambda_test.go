@@ -24,8 +24,8 @@ func TestGetLambdaAppSpecObjFromString_ValidInput(t *testing.T) {
 
 	for _, test := range tests {
 		fileExtension = test.fileExtensionVal
-		appSpecModel := getLambdaAppSpecObjFromString([]byte(test.fileStrInput))
-		if fmt.Sprintf("%v", appSpecModel) != test.objectStrOutput {
+		appSpecModel, err := getLambdaAppSpecObjFromString([]byte(test.fileStrInput))
+		if err != nil || fmt.Sprintf("%v", appSpecModel) != test.objectStrOutput {
 			t.Errorf(appSpecStrConversionError)
 		}
 	}
@@ -44,7 +44,10 @@ func TestValidateLambdaAppSpec_ValidInput(t *testing.T) {
 
 	for _, test := range tests {
 		fileExtension = test.fileExtensionVal
-		appSpecModel := getLambdaAppSpecObjFromString([]byte(test.fileStrInput))
+		appSpecModel, modelErr := getLambdaAppSpecObjFromString([]byte(test.fileStrInput))
+		if modelErr != nil {
+			t.Errorf("getLambdaAppSpecObjFromString FAILED")
+		}
 		err := validateLambdaAppSpec(appSpecModel)
 		if err != nil {
 			t.Errorf(appSpecObjValidationError)

@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"aws-codedeploy-appspec-assistant/globalVars"
+	"aws-codedeploy-appspec-assistant/errorHandling"
 )
 
 // Test validateUserInput
@@ -17,19 +17,19 @@ func TestValidateUserInput_InvalidInput(t *testing.T) {
 		expectedErrorOutput string
 	}{
 		{"Empty filePath",
-			"", "lambda", globalVars.EmptyFilePathErr.Error()},
+			"", "lambda", errorHandling.EmptyFilePathErr},
 
 		{"Invalid filePath extension",
-			"/appSpec_assistant_test/appspec.txt", "lambda", globalVars.InvalidFileNameOrExtensionErr.Error()},
+			"/appSpec_assistant_test/appspec.txt", "lambda", errorHandling.InvalidFileNameOrExtensionErr},
 
 		{"Invalid filePath file name",
-			"/appSpec_assistant_test/incorrect.yml", "lambda", globalVars.InvalidFileNameOrExtensionErr.Error()},
+			"/appSpec_assistant_test/incorrect.yml", "lambda", errorHandling.InvalidFileNameOrExtensionErr},
 
 		{"Empty computeType",
-			"/appSpec_assistant_test/appspec.yml", "", globalVars.ComputePlatformErr.Error()},
+			"/appSpec_assistant_test/appspec.yml", "", errorHandling.ComputePlatformErr},
 
 		{"Invalid computeType",
-			"/appSpec_assistant_test/appspec.json", "invalidComputeType", globalVars.ComputePlatformErr.Error()},
+			"/appSpec_assistant_test/appspec.json", "invalidComputeType", errorHandling.ComputePlatformErr},
 
 		{"YAML and Lambda",
 			"/appSpec_assistant_test/appspec.yml", "lambda", "no such file or directory"},

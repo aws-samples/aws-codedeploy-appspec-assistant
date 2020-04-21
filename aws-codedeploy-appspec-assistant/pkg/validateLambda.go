@@ -6,13 +6,14 @@ import (
 	"encoding/json"
 	"gopkg.in/yaml.v3"
 
+	"aws-codedeploy-appspec-assistant/errorHandling"
 	"aws-codedeploy-appspec-assistant/globalVars"
 	"aws-codedeploy-appspec-assistant/models"
 )
 
 // Convert Lambda AppSpec string to Lambda AppSpec Object
 // Deals with JSON adn YAML
-func getLambdaAppSpecObjFromString(appSpecBytes []byte) models.LambdaAppSpecModel {
+func getLambdaAppSpecObjFromString(appSpecBytes []byte) (models.LambdaAppSpecModel, error) {
 	var err error
 	var lambdaAppSpecModel models.LambdaAppSpecModel
 
@@ -25,12 +26,7 @@ func getLambdaAppSpecObjFromString(appSpecBytes []byte) models.LambdaAppSpecMode
 	// Uncomment to print resulting Object for debug
 	//fmt.Println(lambdaAppSpecModel)
 
-	if err != nil {
-		fmt.Print("\nERROR:")
-		handleError(err)
-	}
-
-	return lambdaAppSpecModel
+	return lambdaAppSpecModel, err
 }
 
 // Validate Lambda AppSpec
@@ -40,15 +36,18 @@ func validateLambdaAppSpec(lambdaAppSpecModel models.LambdaAppSpecModel) error {
 
 	// Resources
 	if lambdaAppSpecModel.Resources == nil || len(lambdaAppSpecModel.Resources) < 0 || !validateLambdaResources(lambdaAppSpecModel.Resources) {
-		err = globalVars.InvalidLambdaResourcesErr
-		fmt.Println(err)
+		err = fmt.Errorf(errorHandling.InvalidLambdaResourcesErr)
 	}
 
 	// Hooks (Optional)
 	if lambdaAppSpecModel.Hooks != nil && len(lambdaAppSpecModel.Hooks) > 0 {
+		// Print resource error (if there is one) since there could be Hooks errors that change the final error message
+		if err != nil {
+			fmt.Println("ERROR: " + err.Error())
+		}
+
 		if !validateLambdaHooks(lambdaAppSpecModel.Hooks) {
-			err = globalVars.InvalidLambdaHooksErr
-			fmt.Println(err)
+			err = fmt.Errorf(errorHandling.InvalidLambdaHooksErr, globalVars.AppSpecSupportedLambdaHooks)
 		}
 	}
 
@@ -62,7 +61,7 @@ func validateLambdaResources(lambdaResources []map[string]models.Function) bool 
 	resourcesValid := true
 
 	if len(lambdaResources) > 1 {
-		fmt.Println(globalVars.UnsupportedNumberOfLambdaResourceErr)
+		fmt.Println(errorHandling.UnsupportedNumberOfLambdaResourceErr)
 		numOfErrors++
 		return false
 	}
@@ -74,20 +73,20 @@ func validateLambdaResources(lambdaResources []map[string]models.Function) bool 
 			if functionResourceName == "" {
 				resourcesValid = false
 				numOfErrors++
-				fmt.Println(globalVars.EmptyLambdaResourceFunctionNameErr)
+				fmt.Println(errorHandling.EmptyLambdaResourceFunctionNameErr)
 			}
 
 			// Function Type
 			if function.Type != "AWS::Lambda::Function" {
 				resourcesValid = false
 				numOfErrors++
-				fmt.Println(globalVars.InvalidLambdaFunctionTypeErr)
+				fmt.Println(errorHandling.InvalidLambdaFunctionTypeErr)
 			}
 
 			// Function Properties
 			if !validateLambdaResourceProperties(function.Properties, functionResourceName) {
 				resourcesValid = false
-				fmt.Println(globalVars.InvalidLambdaFunctionPropsErr)
+				fmt.Println(errorHandling.InvalidLambdaFunctionPropsErr)
 			}
 		}
 	}
@@ -101,25 +100,25 @@ func validateLambdaResourceProperties(lambdaProperties models.LambdaProperties, 
 	if lambdaProperties.Name == "" {
 		propertiesValid = false
 		numOfErrors++
-		fmt.Println(globalVars.EmptyLambdaFunctionNameErr.Error() + functionResourceName)
+		fmt.Println(errorHandling.EmptyLambdaFunctionNameErr, functionResourceName)
 	}
 
 	if lambdaProperties.Alias == "" {
 		propertiesValid = false
 		numOfErrors++
-		fmt.Println(globalVars.EmptyLambdaFunctionAliasErr.Error() + functionResourceName)
+		fmt.Println(errorHandling.EmptyLambdaFunctionAliasErr, functionResourceName)
 	}
 
 	if lambdaProperties.CurrentVersion == "" {
 		propertiesValid = false
 		numOfErrors++
-		fmt.Println(globalVars.EmptyLambdaFunctionCurrVersionErr.Error() + functionResourceName)
+		fmt.Println(errorHandling.EmptyLambdaFunctionCurrVersionErr, functionResourceName)
 	}
 
 	if lambdaProperties.TargetVersion == "" {
 		propertiesValid = false
 		numOfErrors++
-		fmt.Println(globalVars.EmptyLambdaFunctionTargetVersionErr.Error() + functionResourceName)
+		fmt.Println(errorHandling.EmptyLambdaFunctionTargetVersionErr, functionResourceName)
 	}
 
 	return propertiesValid
@@ -135,7 +134,7 @@ func validateLambdaHooks(lambdaHooks []map[string]string) bool {
 		for _, hook := range globalVars.AppSpecSupportedLambdaHooks {
 			if val, ok := lambdaHook[hook]; ok {
 				if val == "" {
-					fmt.Println(globalVars.EmptyLambdaHookValErr.Error() + hook)
+					fmt.Println(errorHandling.EmptyLambdaHookValErr, hook)
 					numOfErrors++
 					hooksValid = false
 				}

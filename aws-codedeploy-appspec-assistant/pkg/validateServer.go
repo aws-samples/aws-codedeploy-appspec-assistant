@@ -7,13 +7,14 @@ import (
 	"encoding/json"
 	"gopkg.in/yaml.v3"
 
+	"aws-codedeploy-appspec-assistant/errorHandling"
 	"aws-codedeploy-appspec-assistant/globalVars"
 	"aws-codedeploy-appspec-assistant/models"
 )
 
 // Convert Server (EC2/On-Prem) AppSpec string to Server (EC2/On-Prem) AppSpec Object
 // Deals with JSON adn YAML
-func getServerAppSpecObjFromString(appSpecBytes []byte) models.ServerAppSpecModel {
+func getServerAppSpecObjFromString(appSpecBytes []byte) (models.ServerAppSpecModel, error) {
 	var err error
 	var serverAppSpecModel models.ServerAppSpecModel
 
@@ -26,12 +27,7 @@ func getServerAppSpecObjFromString(appSpecBytes []byte) models.ServerAppSpecMode
 	// Uncomment to print resulting Object for debug
 	//fmt.Println(serverAppSpecModel)
 
-	if err != nil {
-		fmt.Print("\nERROR:")
-		handleError(err)
-	}
-
-	return serverAppSpecModel
+	return serverAppSpecModel, err
 }
 
 // Validate EC2/On-Prem (Server) AppSpec
@@ -42,7 +38,7 @@ func validateServerAppSpec(serverAppSpecModel models.ServerAppSpecModel) error {
 	// OS
 	if serverAppSpecModel.OS == "" || !checkOS(serverAppSpecModel.OS) {
 		numOfErrors++
-		osError := globalVars.UnsupportedServerOSErr
+		osError := fmt.Errorf(errorHandling.UnsupportedServerOSErr, globalVars.AppSpecSupportedServerOSs)
 		fmt.Println(osError)
 		err = osError
 	}
@@ -50,11 +46,11 @@ func validateServerAppSpec(serverAppSpecModel models.ServerAppSpecModel) error {
 	// Files
 	if serverAppSpecModel.Files == nil || len(serverAppSpecModel.Files) < 1 {
 		numOfErrors++
-		err = globalVars.MissingServerFileSpecErr
+		err = fmt.Errorf(errorHandling.MissingServerFileSpecErr)
 		fmt.Println(err)
 	} else {
 		if !validateServerFiles(serverAppSpecModel.Files) {
-			err = globalVars.InvalidServerFileSpecsErr
+			err = fmt.Errorf(errorHandling.InvalidServerFileSpecsErr)
 			fmt.Println(err)
 		}
 	}
@@ -64,7 +60,7 @@ func validateServerAppSpec(serverAppSpecModel models.ServerAppSpecModel) error {
 		// All other values are optionsl
 		fmt.Println("\nWARNING: All options besides Object are optional for permissions so there is very little to validate automatically.")
 		if !validateServerPermissions(serverAppSpecModel.Permissions) {
-			err = globalVars.InvalidServerPermissionsErr
+			err = fmt.Errorf(errorHandling.InvalidServerPermissionsErr)
 			fmt.Println(err)
 		}
 	}
@@ -73,7 +69,7 @@ func validateServerAppSpec(serverAppSpecModel models.ServerAppSpecModel) error {
 	if serverAppSpecModel.Hooks != nil && len(serverAppSpecModel.Hooks) > 0 {
 		fmt.Println("\nWARNING: runas under Hook Scripts only applies to Amazon Linux and Ubuntu Server instances. The user also cannot require a password. Leave blank for agent default.")
 		if !validateServerHooks(serverAppSpecModel.Hooks) {
-			err = globalVars.InvalidServerHooksErr
+			err = fmt.Errorf(errorHandling.InvalidServerHooksErr)
 			fmt.Println(err)
 		}
 	}
@@ -101,13 +97,13 @@ func validateServerFiles(files []models.File) bool {
 		if file.Source == "" {
 			filesValid = false
 			numOfErrors++
-			fmt.Println(globalVars.MissingServerFileSourceErr)
+			fmt.Println(errorHandling.MissingServerFileSourceErr)
 		}
 
 		if file.Destination == "" {
 			filesValid = false
 			numOfErrors++
-			fmt.Println(globalVars.MissingServerFileDestinationErr)
+			fmt.Println(errorHandling.MissingServerFileDestinationErr)
 		}
 	}
 
@@ -123,7 +119,7 @@ func validateServerPermissions(permissions []models.Permission) bool {
 		if permission.Object == "" {
 			permissionsValid = false
 			numOfErrors++
-			fmt.Println(globalVars.EmptyServerPermissionObjErr.Error())
+			fmt.Println(errorHandling.EmptyServerPermissionObjErr)
 			fmt.Println(permission)
 		}
 
@@ -132,7 +128,7 @@ func validateServerPermissions(permissions []models.Permission) bool {
 				if typeStr != "" && typeStr != "file" && typeStr != "directory" {
 					permissionsValid = false
 					numOfErrors++
-					fmt.Println(globalVars.InvalidServerPermissionTypeErr.Error())
+					fmt.Println(errorHandling.InvalidServerPermissionTypeErr)
 					fmt.Println(permission)
 				}
 			}
@@ -174,7 +170,9 @@ func validateServerHooks(serverHooks map[string][]models.Hook) bool {
 
 	if !(numValidHooks == len(serverHooks)) {
 		numOfErrors++
-		fmt.Println(globalVars.UnsupportedServerHooksErr)
+		fmt.Println(errorHandling.UnsupportedServerHooksErr)
+		fmt.Printf(errorHandling.SupportedServerHooksWithoutLBStr, globalVars.AppSpecSupportedServerHooksWithoutLB)
+		fmt.Printf(errorHandling.SupportedServerHooksWithLBStr, globalVars.AppSpecSupportedServerHooksWithLB)
 	}
 
 	return false
@@ -187,7 +185,7 @@ func validateServerHookScripts(hookScriptList []models.Hook, hook string) bool {
 		if hookScript.Location == "" {
 			scriptsValid = false
 			numOfErrors++
-			fmt.Println(globalVars.MissingServerHookScriptLocationErr.Error() + hook)
+			fmt.Println(errorHandling.MissingServerHookScriptLocationErr, hook)
 		}
 
 		if hookScript.Timeout != "" {
@@ -200,7 +198,7 @@ func validateServerHookScripts(hookScriptList []models.Hook, hook string) bool {
 			totalTimeout += i
 			if totalTimeout > 3600 {
 				numOfErrors++
-				fmt.Println(globalVars.InvalidServerScriptTimeoutErr.Error() + hook)
+				fmt.Println(errorHandling.InvalidServerScriptTimeoutErr, hook)
 				scriptsValid = false
 			}
 		}

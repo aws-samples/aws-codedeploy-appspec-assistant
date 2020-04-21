@@ -24,8 +24,8 @@ func TestGetServerAppSpecObjFromString_ValidInput(t *testing.T) {
 
 	for _, test := range tests {
 		fileExtension = test.fileExtensionVal
-		appSpecModel := getServerAppSpecObjFromString([]byte(test.fileStrInput))
-		if fmt.Sprintf("%v", appSpecModel) != test.objectStrOutput {
+		appSpecModel, err := getServerAppSpecObjFromString([]byte(test.fileStrInput))
+		if err != nil || fmt.Sprintf("%v", appSpecModel) != test.objectStrOutput {
 			t.Errorf(appSpecStrConversionError)
 		}
 	}
@@ -44,7 +44,10 @@ func TestValidateServerAppSpec_ValidInput(t *testing.T) {
 
 	for _, test := range tests {
 		fileExtension = test.fileExtensionVal
-		appSpecModel := getServerAppSpecObjFromString([]byte(test.fileStrInput))
+		appSpecModel, modelErr := getServerAppSpecObjFromString([]byte(test.fileStrInput))
+		if modelErr != nil {
+			t.Errorf("getServerAppSpecObjFromString FAILED")
+		}
 		err := validateServerAppSpec(appSpecModel)
 		if err != nil {
 			t.Errorf(appSpecObjValidationError)
